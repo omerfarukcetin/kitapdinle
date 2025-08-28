@@ -215,9 +215,6 @@
                     <div class="flex justify-between w-full text-gray-600 text-xs mt-2">
                         <span>0.5x</span>
                         <span>1.0x (Normal)</span>
-                        <span>1.5x</span>
-                        <span>2.0x</span>
-                        <span>2.5x</span>
                         <span>3.0x</span>
                     </div>
                 </div>
@@ -435,7 +432,6 @@
         const currentBookImageLink = document.getElementById('current-book-image-link');
         const searchInput = document.getElementById('search-input'); // Yeni arama inputu
         const resetProgressBtn = document.getElementById('reset-progress-btn'); // İlerleme Sıfırla düğmesi
-        // Yeni eklenen: ilerleme çubuğu kapsayıcısı
         const progressBarContainer = document.getElementById('progress-bar-container');
 
 
@@ -505,6 +501,15 @@
             localStorage.setItem('bookProgress', JSON.stringify(dataToStore));
         }
 
+        // En son oynatılan kitabın ve konunun durumunu kaydetme
+        function saveLastPlayedState() {
+            if (selectedBook && currentTopic && !isNaN(audioPlayer.currentTime)) {
+                localStorage.setItem('lastPlayedBookId', selectedBook.id);
+                localStorage.setItem('lastPlayedTopicId', currentTopic.id);
+                localStorage.setItem('lastPlayedTime', audioPlayer.currentTime.toString());
+            }
+        }
+
         // Kitap resimlerini doldurma fonksiyonu (arama sorgusu eklenmiştir)
         function populateBookImages(searchTerm = '') {
             bookImagesContainer.innerHTML = ''; // Önceki resimleri temizle
@@ -545,6 +550,8 @@
                 bookItem.appendChild(title);
 
                 bookItem.addEventListener('click', () => {
+                    // Mevcut oynatma durumunu kaydetmeden yeni kitaba geçiş yap
+                    saveLastPlayedState(); 
                     selectBook(book.id);
                 });
 
@@ -581,7 +588,8 @@
                 currentBookDisplayImage.alt = selectedBook.title;
                 currentBookImageLink.href = selectedBook.imageUrl; // Kitap resmine tıklayınca resmin linkine gitsin
 
-                loadTopic(selectedBook.topics[0], false); // Yeni kitabı ve ilk konusunu yükle, otomatik oynatma yapma
+                // İlk konuyu yükle, otomatik oynatma yapma
+                loadTopic(selectedBook.topics[0], false); 
                 updateDisplay(); // Yeni kitap seçildiğinde ilerlemeyi güncelle
             }
         }
@@ -627,17 +635,26 @@
                 // Dinleme sayacını güncelle
                 bookListenCount.textContent = `Kitap Dinleme Sayısı: ${listenCount}`;
 
+                // Sayfa başlığını güncelle
+                document.title = `${selectedBook.title} - ${currentTopic.title} | Hakikat Kitabevi`;
+
             } else {
                 currentTopicTitle.textContent = 'Konu Seçilmedi';
                 visualProgressBar.style.width = '0%';
                 bookCompletionPercentage.textContent = '0%';
                 bookListenCount.textContent = 'Kitap Dinleme Sayısı: 0';
+                document.title = 'Hakikat Kitabevi Sesli Yayınlar'; // Varsayılan başlık
             }
         }
 
         // Sesi yükleme ve oynatma
-        function loadTopic(topic, autoPlayAfterLoad = false) {
+        function loadTopic(topic, autoPlayAfterLoad = false, seekTime = 0) {
             if (audioPlayer.src !== topic.audio) { // Sadece farklı bir ses ise yeniden yükle
+                // Yeni bir konu yüklendiğinde mevcut oynatma durumunu kaydet
+                if (selectedBook && currentTopic) {
+                    saveLastPlayedState();
+                }
+
                 audioPlayer.src = topic.audio;
                 audioPlayer.load(); // Ses dosyasını yükle
                 isPlaying = false; // Yükleme sırasında oynatmıyor olarak ayarla
@@ -645,24 +662,29 @@
                 progressBar.value = 0;
                 currentTimeSpan.textContent = '00:00';
                 durationSpan.textContent = '00:00';
-                // İlerleme çubuğunun dolgusunu sıfırla
                 progressBar.style.setProperty('--progress', '0%');
             }
 
             currentTopic = topic;
-            updateDisplay();
+            updateDisplay(); // Sayfa başlığını burada da güncelle
             audioPlayer.playbackRate = playbackSpeed; // Hızı uygula
 
-            // Eğer otomatik oynatma isteniyorsa, kullanıcı etkileşimi sonrası başlat
-            if (autoPlayAfterLoad) {
-                audioPlayer.play().catch(e => {
-                    console.error("Oynatma hatası (otomatik geçiş):", e);
-                    isPlaying = false;
+            // Eğer bir seekTime belirtildiyse, ses yüklenince o zamana git
+            audioPlayer.oncanplaythrough = () => {
+                if (seekTime > 0 && !audioPlayer.seeking) {
+                    audioPlayer.currentTime = seekTime;
+                    audioPlayer.oncanplaythrough = null; // Sadece bir kez çalıştır
+                }
+                if (autoPlayAfterLoad) {
+                    audioPlayer.play().catch(e => {
+                        console.error("Oynatma hatası (otomatik geçiş):", e);
+                        isPlaying = false;
+                        updatePlayPauseButton();
+                    });
+                    isPlaying = true;
                     updatePlayPauseButton();
-                });
-                isPlaying = true; // Hata vermese bile oynuyor olarak işaretle
-                updatePlayPauseButton();
-            }
+                }
+            };
         }
 
         // Oynat/Duraklat düğmesi ikonunu güncelle
@@ -799,8 +821,36 @@
             
             initializeProgressData(); // İlerleme verilerini başlat
             populateBookImages(); // Kitap seçim elemanlarını doldur
-            if (books.length > 0) {
-                selectBook(books[0].id);
+
+            // En son oynatılan durumu kontrol et ve yükle
+            const lastPlayedBookId = localStorage.getItem('lastPlayedBookId');
+            const lastPlayedTopicId = localStorage.getItem('lastPlayedTopicId');
+            const lastPlayedTime = parseFloat(localStorage.getItem('lastPlayedTime')) || 0;
+
+            if (lastPlayedBookId && lastPlayedTopicId) {
+                const book = books.find(b => b.id === lastPlayedBookId);
+                if (book) {
+                    selectBook(book.id); // Kitabı seç
+                    const topic = book.topics.find(t => t.id === lastPlayedTopicId);
+                    if (topic) {
+                        topicSelect.value = topic.id; // Konuyu seçili hale getir
+                        loadTopic(topic, false, lastPlayedTime); // Konuyu yükle ve kaldığı yerden devam et
+                        console.log(`Kaldığı yerden devam ediliyor: Kitap "${book.title}", Konu "${topic.title}", Süre: ${formatTime(lastPlayedTime)}`);
+                    } else {
+                        // Eğer konu bulunamazsa, kitabın ilk konusunu yükle
+                        loadTopic(book.topics[0], false);
+                    }
+                } else {
+                    // Eğer kitap bulunamazsa veya hiç kaydedilen durum yoksa, ilk kitabı seç
+                    if (books.length > 0) {
+                        selectBook(books[0].id);
+                    }
+                }
+            } else {
+                // Hiç kaydedilen durum yoksa, ilk kitabı seç
+                if (books.length > 0) {
+                    selectBook(books[0].id);
+                }
             }
         };
 
@@ -809,6 +859,8 @@
             const topicId = event.target.value;
             const topic = selectedBook.topics.find(t => t.id === topicId);
             if (topic) {
+                // Yeni konu seçildiğinde mevcut oynatma durumunu kaydet
+                saveLastPlayedState();
                 loadTopic(topic, false); // Seçilen konuyu yükle, otomatik oynatma yapma
             }
         });
@@ -833,12 +885,14 @@
                 isPlaying = false;
                 updatePlayPauseButton();
             }
+            saveLastPlayedState(); // Oynat/duraklat durumunda da kaydet
         });
 
         // İlerleme çubuğu değiştiğinde
         progressBar.addEventListener('input', () => {
             const seekTime = (audioPlayer.duration / 100) * progressBar.value;
             audioPlayer.currentTime = seekTime;
+            saveLastPlayedState(); // Kullanıcı manuel olarak ilerlemeyi değiştirdiğinde kaydet
         });
 
         // Oynatma hızı değiştiğinde
@@ -860,6 +914,12 @@
             currentTimeSpan.textContent = formatTime(audioPlayer.currentTime);
             // İlerleme çubuğunun dolgu rengini güncelle
             progressBar.style.setProperty('--progress', progress + '%');
+
+            // Her 5 saniyede bir veya belirli aralıklarla oynatma konumunu kaydet
+            // Bu, çok sık yazmayı önlemek için basit bir kısıtlamadır.
+            if (Math.floor(audioPlayer.currentTime) % 5 === 0) {
+                saveLastPlayedState();
+            }
         });
 
         audioPlayer.addEventListener('ended', () => {
@@ -900,6 +960,7 @@
                 // İsteğe bağlı: Tüm kitapların bittiğine dair özel bir mesaj gösterebiliriz.
             }
             updateDisplay(); // Kitap ilerlemesini güncelle
+            saveLastPlayedState(); // Konu bittiğinde de son durumu kaydet
         });
 
         // Tema değiştirme düğmesi tıklaması
@@ -918,8 +979,16 @@
                 saveProgressData(); // Güncellenmiş veriyi kaydet
                 updateDisplay(); // UI'ı güncelle
                 console.log(`${selectedBook.title} kitabının ilerlemesi sıfırlandı.`);
+                
+                // İlerleme sıfırlandığında son oynatılan durumu da temizle
+                localStorage.removeItem('lastPlayedBookId');
+                localStorage.removeItem('lastPlayedTopicId');
+                localStorage.removeItem('lastPlayedTime');
             }
         });
+
+        // Tarayıcı kapatıldığında veya sayfa yenilendiğinde son oynatma durumunu kaydet
+        window.addEventListener('beforeunload', saveLastPlayedState);
     </script>
 </body>
 </html>
