@@ -1,0 +1,352 @@
+﻿import React, { useState, useRef, useEffect, useCallback } from 'react';
+
+// Ana App bileşeni
+function App() {
+  // Örnek kitap verileri. Kendi ses dosyası yollarınızla güncelleyebilirsiniz.
+  // Not: Eğer ses dosyalarınız aynı sunucuda ise, örneğin '/audio/8-mektubat/konu1.mp3' gibi göreceli yollar kullanabilirsiniz.
+  // Bu örnekte genel kullanıma uygun olması için SoundHelix'ten örnek MP3'ler kullanılmıştır.
+  const books = [
+    {
+      id: '8-mektubat',
+      title: '8. Mektubat',
+      topics: [
+        {id: 'mektubat-243', title: '243. Mektub', audio: '8-mektubat/243_Mektub.mp3'},
+        {id: 'mektubat-244', title: '244. Mektub', audio: '8-mektubat/244_Mektub.mp3'},
+        {id: 'mektubat-245', title: '245. Mektub', audio: '8-mektubat/245_Mektub.mp3'},
+        {id: 'mektubat-246', title: '246. Mektub', audio: '8-mektubat/246_Mektub.mp3'},
+        {id: 'mektubat-247', title: '247. Mektub', audio: '8-mektubat/247_Mektub.mp3'},
+        {id: 'mektubat-248', title: '248. Mektub', audio: '8-mektubat/248_Mektub.mp3'},
+        {id: 'mektubat-249', title: '249. Mektub', audio: '8-mektubat/249_Mektub.mp3'},
+        {id: 'mektubat-250', title: '250. Mektub', audio: '8-mektubat/250_Mektub.mp3'},
+        {id: 'mektubat-251', title: '251. Mektub', audio: '8-mektubat/251_Mektub.mp3'},
+        {id: 'mektubat-252', title: '252. Mektub', audio: '8-mektubat/252_Mektub.mp3'},
+        {id: 'mektubat-253', title: '253. Mektub', audio: '8-mektubat/253_Mektub.mp3'},
+        {id: 'mektubat-254', title: '254. Mektub', audio: '8-mektubat/254_Mektub.mp3'},
+        {id: 'mektubat-255', title: '255. Mektub', audio: '8-mektubat/255_Mektub.mp3'},
+        {id: 'mektubat-256', title: '256. Mektub', audio: '8-mektubat/256_Mektub.mp3'},
+        {id: 'mektubat-257', title: '257. Mektub', audio: '8-mektubat/257_Mektub.mp3'},
+        {id: 'mektubat-258', title: '258. Mektub', audio: '8-mektubat/258_Mektub.mp3'},
+        {id: 'mektubat-259', title: '259. Mektub', audio: '8-mektubat/259_Mektub.mp3'},
+        {id: 'mektubat-260', title: '260. Mektub', audio: '8-mektubat/260_Mektub.mp3'},
+      ],
+    },
+    {
+      id: '9-mektubat',
+      title: '9. Mektubat (Örnek)',
+      topics: [
+        { id: 'mektubat9-konu1', title: '1. Konu: Tevhid', audio: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3' },
+        { id: 'mektubat9-konu2', title: '2. Konu: Haşir', audio: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-6.mp3' },
+      ],
+    },
+  ];
+
+  // Durum yönetimi için useState hook'ları
+  const [selectedBook, setSelectedBook] = useState(books[0]); // Seçilen kitap
+  const [currentTopic, setCurrentTopic] = useState(selectedBook.topics[0]); // Oynatılan konu
+  const [isPlaying, setIsPlaying] = useState(false); // Oynatma durumu
+  const [playbackSpeed, setPlaybackSpeed] = useState(1.0); // Oynatma hızı
+  const [progress, setProgress] = useState(0); // Oynatma ilerlemesi (%)
+  const [currentTime, setCurrentTime] = useState(0); // Geçen süre (saniye)
+  const [duration, setDuration] = useState(0); // Toplam süre (saniye)
+
+  // Ses elemanına erişim için useRef hook'u
+  const audioRef = useRef(null);
+  // Otomatik oynatma geçişi için bayrak
+  const autoPlayOnLoadRef = useRef(false);
+
+  // Ses dosyasını değiştirme ve oynatma fonksiyonu
+  // autoPlayNext: Sonraki konuya otomatik geçişte true, manuel seçimde false
+  const playTopic = useCallback((topic, autoPlayNext = false) => {
+    setCurrentTopic(topic);
+    autoPlayOnLoadRef.current = autoPlayNext; // Otomatik oynatma bayrağını ayarla
+
+    if (audioRef.current) {
+      audioRef.current.src = topic.audio;
+      audioRef.current.load(); // Yeni kaynağı yükle
+      setIsPlaying(false); // Yeni konu yüklendiğinde oynatmıyor olarak ayarla
+      setProgress(0); // İlerlemeyi sıfırla
+      setCurrentTime(0); // Geçen süreyi sıfırla
+      setDuration(0); // Süreyi sıfırla
+    }
+  }, []);
+
+  // Kitap seçimi değiştiğinde
+  const handleBookChange = (event) => {
+    const bookId = event.target.value;
+    const book = books.find((b) => b.id === bookId);
+    if (book) {
+      setSelectedBook(book);
+      // Yeni kitabın ilk konusunu otomatik olarak seç ve oynatmaya hazırla (otomatik oynatmayacak)
+      playTopic(book.topics[0], false);
+    }
+  };
+
+  // Konu seçimi değiştiğinde
+  const handleTopicChange = (event) => {
+    const topicId = event.target.value;
+    const topic = selectedBook.topics.find((t) => t.id === topicId);
+    if (topic) {
+      // Manuel konu seçimi, otomatik oynatmayacak
+      playTopic(topic, false);
+    }
+  };
+
+  // Oynatma/Duraklatma düğmesi
+  const togglePlayPause = () => {
+    if (audioRef.current) {
+      if (isPlaying) {
+        audioRef.current.pause();
+      } else {
+        // Kullanıcı etkileşimiyle oynatma başlatılıyor
+        audioRef.current.play().catch(e => console.error("Oynatma hatası:", e));
+      }
+      setIsPlaying(!isPlaying);
+    }
+  };
+
+  // Oynatma hızını değiştirme
+  const handleSpeedChange = (event) => {
+    const speed = parseFloat(event.target.value);
+    setPlaybackSpeed(speed);
+    if (audioRef.current) {
+      audioRef.current.playbackRate = speed;
+    }
+  };
+
+  // İlerleme çubuğu değiştiğinde
+  const handleProgressChange = (event) => {
+    if (audioRef.current) {
+      const seekTime = (audioRef.current.duration / 100) * event.target.value;
+      audioRef.current.currentTime = seekTime;
+      setProgress(event.target.value);
+    }
+  };
+
+  // Ses elemanı yüklendiğinde toplam süreyi ve oynatma hızını ayarla
+  const handleLoadedMetadata = () => {
+    if (audioRef.current) {
+      setDuration(audioRef.current.duration);
+      audioRef.current.playbackRate = playbackSpeed; // Oynatma hızını uygula
+
+      // Eğer otomatik geçiş bayrağı ayarlıysa, sesi oynat
+      if (autoPlayOnLoadRef.current) {
+        audioRef.current.play().catch(e => console.error("Oynatma hatası:", e));
+        setIsPlaying(true);
+        autoPlayOnLoadRef.current = false; // Bayrağı sıfırla
+      }
+    }
+  };
+
+  // Ses elemanı zaman güncellendiğinde ilerlemeyi ayarla
+  const handleTimeUpdate = () => {
+    if (audioRef.current) {
+      const newProgress = (audioRef.current.currentTime / audioRef.current.duration) * 100;
+      setProgress(newProgress || 0);
+      setCurrentTime(audioRef.current.currentTime);
+    }
+  };
+
+  // Ses elemanı bittiğinde sonraki konuya geç
+  const handleEnded = () => {
+    setIsPlaying(false);
+    setProgress(0);
+    setCurrentTime(0);
+
+    const currentTopicIndex = selectedBook.topics.findIndex(
+      (topic) => topic.id === currentTopic.id
+    );
+    const nextTopicIndex = currentTopicIndex + 1;
+
+    if (nextTopicIndex < selectedBook.topics.length) {
+      // Sonraki konuya otomatik olarak geç ve oynat
+      playTopic(selectedBook.topics[nextTopicIndex], true);
+    } else {
+      // Kitaptaki tüm konular bitti
+      console.log("Tüm konular bitti.");
+      // İsteğe bağlı: Burada bir mesaj gösterebilir veya başa dönebilirsiniz
+    }
+  };
+
+  // İlk render'da veya seçilen kitap değiştiğinde konuyu ayarla
+  useEffect(() => {
+    if (selectedBook && selectedBook.topics.length > 0) {
+      // İlk yüklemede veya kitap değişiminde otomatik oynatma yapma
+      playTopic(selectedBook.topics[0], false);
+    }
+  }, [selectedBook, playTopic]); // playTopic useCallback ile memoize edildiği için güvenli
+
+  // Audio elemanı olay dinleyicilerini kur ve temizle
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (audio) {
+      audio.addEventListener('loadedmetadata', handleLoadedMetadata);
+      audio.addEventListener('timeupdate', handleTimeUpdate);
+      audio.addEventListener('ended', handleEnded);
+
+      // Cleanup
+      return () => {
+        audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
+        audio.removeEventListener('timeupdate', handleTimeUpdate);
+        audio.removeEventListener('ended', handleEnded);
+      };
+    }
+  }, [handleLoadedMetadata, handleTimeUpdate, handleEnded]); // Bağımlılıkları güncelle
+
+  // Zamanı HH:MM:SS formatına dönüştürme yardımcı fonksiyonu
+  const formatTime = (seconds) => {
+    if (isNaN(seconds)) return '00:00';
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = Math.floor(seconds % 60);
+    const formattedH = h > 0 ? String(h).padStart(2, '0') + ':' : '';
+    const formattedM = String(m).padStart(2, '0');
+    const formattedS = String(s).padStart(2, '0');
+    return `${formattedH}${formattedM}:${formattedS}`;
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-800 via-stone-900 to-black flex items-center justify-center p-4 font-inter">
+      <div className="bg-white bg-opacity-90 backdrop-filter backdrop-blur-lg rounded-2xl shadow-xl p-8 w-full max-w-lg border border-gray-200">
+        <h1 className="text-4xl font-extrabold text-center mb-8 text-gray-800 tracking-tight">
+          <span className="bg-clip-text text-transparent bg-gradient-to-r from-emerald-600 to-teal-700">
+            Kitap Çalar
+          </span>
+        </h1>
+
+        <div className="mb-6">
+          <label htmlFor="book-select" className="block text-gray-700 text-sm font-semibold mb-2">
+            Kitap Seçin:
+          </label>
+          <div className="relative">
+            <select
+              id="book-select"
+              onChange={handleBookChange}
+              value={selectedBook.id}
+              className="block appearance-none w-full bg-gray-100 border border-gray-300 text-gray-800 py-3 px-4 pr-8 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition duration-200 ease-in-out cursor-pointer"
+            >
+              {books.map((book) => (
+                <option key={book.id} value={book.id}>
+                  {book.title}
+                </option>
+              ))}
+            </select>
+            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+              <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 6.757 7.586 5.343 9z" />
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <div className="mb-8">
+          <label htmlFor="topic-select" className="block text-gray-700 text-sm font-semibold mb-2">
+            Konu Seçin:
+          </label>
+          <div className="relative">
+            <select
+              id="topic-select"
+              onChange={handleTopicChange}
+              value={currentTopic?.id || ''}
+              className="block appearance-none w-full bg-gray-100 border border-gray-300 text-gray-800 py-3 px-4 pr-8 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition duration-200 ease-in-out cursor-pointer"
+            >
+              {selectedBook.topics.map((topic) => (
+                <option key={topic.id} value={topic.id}>
+                  {topic.title}
+                </option>
+              ))}
+            </select>
+            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+              <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 6.757 7.586 5.343 9z" />
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        {currentTopic && (
+          <div className="text-center mb-6">
+            <h2 className="text-2xl font-bold text-gray-800 mb-2">{currentTopic.title}</h2>
+            <p className="text-gray-600 text-sm">Kitap: {selectedBook.title}</p>
+          </div>
+        )}
+
+        <audio ref={audioRef} preload="auto" className="hidden"></audio>
+
+        <div className="flex flex-col items-center gap-4 mb-6">
+          <input
+            type="range"
+            min="0"
+            max="100"
+            value={progress}
+            onChange={handleProgressChange}
+            className="w-full h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer accent-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+          />
+          <div className="flex justify-between w-full text-gray-600 text-sm font-medium">
+            <span>{formatTime(currentTime)}</span>
+            <span>{formatTime(duration)}</span>
+          </div>
+        </div>
+
+        <div className="flex justify-center items-center gap-6 mb-6">
+          <button
+            onClick={togglePlayPause}
+            className="flex items-center justify-center p-4 rounded-full bg-emerald-700 text-white shadow-lg hover:bg-emerald-800 focus:outline-none focus:ring-4 focus:ring-emerald-300 transition-all duration-300 ease-in-out transform hover:scale-105"
+            aria-label={isPlaying ? 'Duraklat' : 'Oynat'}
+          >
+            {isPlaying ? (
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-8 w-8"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.5 8.75A.75.75 0 008.75 8h-1.5a.75.75 0 00-.75.75v3.5c0 .414.336.75.75.75h1.5a.75.75 0 00.75-.75v-3.5zM12.25 8.75a.75.75 0 00-.75-.75h-1.5a.75.75 0 00-.75.75v3.5c0 .414.336.75.75.75h1.5a.75.75 0 00.75-.75v-3.5z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            ) : (
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-8 w-8"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.528 7.379a.75.75 0 00-.757 1.109l2.75 1.75a.75.75 0 000 1.282l-2.75 1.75a.75.75 0 00.757 1.109l3.5-2.25a.75.75 0 000-1.282l-3.5-2.25z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            )}
+          </button>
+        </div>
+
+        <div className="mb-4">
+          <label htmlFor="playback-speed" className="block text-gray-700 text-sm font-semibold mb-2">
+            Oynatma Hızı: {playbackSpeed}x
+          </label>
+          <input
+            type="range"
+            id="playback-speed"
+            min="0.5"
+            max="2.0"
+            step="0.25"
+            value={playbackSpeed}
+            onChange={handleSpeedChange}
+            className="w-full h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer accent-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+          />
+          <div className="flex justify-between w-full text-gray-600 text-xs mt-1">
+            <span>0.5x</span>
+            <span>1.0x (Normal)</span>
+            <span>2.0x</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  );
+}
+
+export default App;
