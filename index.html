@@ -942,6 +942,26 @@
             audioPlayer.playbackRate = playbackSpeed;
         });
 
+        // Ses bittiğinde bir sonraki konuyu otomatik oynat
+        audio.addEventListener('ended', () => {
+            console.log('Ses bitti, bir sonraki konuya geçiliyor...');
+            markTopicAsCompleted(); // Mevcut konuyu tamamlandı olarak işaretle
+            saveLastPlayedState(); // Son durumu kaydet
+
+            if (selectedBook && selectedTopic) {
+                const currentTopicIndex = selectedBook.topics.findIndex(topic => topic.id === selectedTopic.id);
+
+                // Bir sonraki konunun olup olmadığını kontrol et
+                if (currentTopicIndex !== -1 && currentTopicIndex < selectedBook.topics.length - 1) {
+                    const nextTopic = selectedBook.topics[currentTopicIndex + 1];
+                    // Bir sonraki konuyu oynat
+                    playTopic(nextTopic.id);
+                } else {
+                    console.log('Kitaptaki tüm konular bitti.');
+                }
+            }
+        });
+
         // Audio olayları
         audioPlayer.addEventListener('loadedmetadata', () => {
             durationSpan.textContent = formatTime(audioPlayer.duration);
