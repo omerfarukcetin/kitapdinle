@@ -15,7 +15,6 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            /* Tema sınıfları JavaScript tarafından yönetileceği için burada başlangıç sınıfı kaldırıldı */
         }
 
         /* Oynatma hızı inputunun görünümünü özelleştirmek için */
@@ -40,41 +39,21 @@
             transition: background .15s ease-in-out;
         }
 
-        input[type='range']::-ms-thumb {
-            width: 16px;
-            height: 16px;
-            border-radius: 50%;
-            background: #059669; /* emerald-600 */
-            cursor: pointer;
-            box-shadow: 0 0 0 4px rgba(5, 150, 105, 0.3);
-            transition: background .15s ease-in-out;
-        }
-
-        input[type='range']:focus::-webkit-slider-thumb {
-            background: #047857; /* emerald-700 */
-        }
-        input[type='range']:focus::-moz-range-thumb {
-            background: #047857; /* emerald-700 */
-        }
-        input[type='range']:focus::-ms-thumb {
-            background: #047857; /* emerald-700 */
-        }
-
-        /* İlerleme çubuğunun dolgu rengi */
         input[type='range']#progress-bar {
             -webkit-appearance: none;
             width: 100%;
             height: 8px;
-            background: linear-gradient(to right, #059669 var(--progress, 0%), #d1d5db var(--progress, 0%)); /* green fill, gray background */
+            /* Basit ilerleme çubuğu için sadece renk ayarı */
+            background: linear-gradient(to right, #059669 var(--progress, 0%), #d1d5db var(--progress, 0%));
             border-radius: 9999px;
             outline: none;
             transition: background 450ms ease-in;
         }
         input[type='range']#progress-bar::-webkit-slider-runnable-track {
-            background: transparent; /* Track color handled by parent input */
+            background: transparent;
         }
         input[type='range']#progress-bar::-moz-range-track {
-            background: transparent; /* Track color handled by parent input */
+            background: transparent;
         }
 
         /* Kitap resmi seçimi için özel stil */
@@ -92,6 +71,19 @@
             box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
             transform: translateY(-2px);
         }
+
+        /* Kopyalama Bilgi Kutusu Stili */
+        #copy-feedback-modal {
+            animation: fadeInOut 5s forwards;
+            pointer-events: none; /* Tıklamayı engelle */
+        }
+
+        @keyframes fadeInOut {
+            0% { opacity: 0; transform: translate(-50%, 0); }
+            10% { opacity: 1; transform: translate(-50%, 0); }
+            90% { opacity: 1; transform: translate(-50%, 0); }
+            100% { opacity: 0; transform: translate(-50%, 0); }
+        }
     </style>
 </head>
 <body class="min-h-screen flex items-center justify-center p-4">
@@ -100,7 +92,7 @@
         
         <!-- Üst Bölüm: Tema değiştirme, Logo ve Başlık -->
         <div class="relative flex flex-col items-center mb-4 lg:mb-2">
-            <!-- Tema değiştirme düğmesi (absolute positioning) -->
+            <!-- Tema değiştirme düğmesi -->
             <div class="absolute top-0 right-0 z-10">
                 <button id="theme-toggle" class="p-2 rounded-full bg-gray-200 hover:bg-gray-300 text-gray-800 transition-colors duration-200" aria-label="Temayı Değiştir">
                     <!-- Güneş ikonu (açık tema) -->
@@ -123,10 +115,18 @@
                     </span>
                 </h1>
             </div>
+            
+            <!-- İlerleme Kodu Yapıştırıcı Alanı -->
+            <div class="w-full mt-4 flex flex-col md:flex-row items-center justify-center space-y-2 md:space-y-0 md:space-x-2">
+                <input type="text" id="paste-code-input" placeholder="Kodu Yapıştır (Örn: tam-ilmhai_25_1234)" class="w-full md:w-3/5 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <button id="load-position-btn" class="w-full md:w-2/5 px-4 py-2 bg-blue-500 text-white rounded-lg shadow-md hover:bg-blue-600 transition duration-200 font-semibold">
+                    Konumu Yükle
+                </button>
+            </div>
         </div>
 
         <!-- Ana içerik alanı -->
-        <div class="lg:flex lg:space-x-8 lg:items-start">
+        <div class="lg:flex lg:space-x-8 lg:items-start mt-6">
             <!-- Sol Bölüm: Kitap Seçimi (Görsel Liste) -->
             <div class="lg:w-1/2 flex flex-col mb-8 lg:mb-0">
                 <label class="block text-gray-700 text-sm font-semibold mb-2">
@@ -169,19 +169,23 @@
                 <div class="text-center mb-6">
                     <h2 id="current-topic-title" class="text-2xl font-bold text-gray-800 mb-2"></h2>
                     
-                    <!-- Modern ve Dikkat Çekici İlerleme Göstergesi -->
-                    <div id="progress-bar-container" class="mt-4 mb-2 relative w-full h-8 bg-gray-200 rounded-full overflow-hidden shadow-inner">
-                        <div id="visual-progress-bar" class="absolute h-full bg-emerald-500 rounded-full transition-all duration-500 ease-out" style="width: 0%;"></div>
-                        <div id="book-completion-percentage-wrapper" class="absolute inset-0 flex items-center justify-center font-extrabold text-lg">
-                            <span id="book-completion-percentage">0%</span>
+                    <!-- DİKKAT: Firestore'dan gelen ilerleme göstergeleri kaldırıldı. -->
+                </div>
+
+                <!-- YENİ: Kopyalama Özelliği -->
+                <div class="text-center mb-6 relative">
+                    <button id="copy-position-btn" class="px-6 py-2 bg-green-600 text-white rounded-lg shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 transition duration-200 font-semibold w-full">
+                        <span id="copy-btn-text">Kaldığın Yeri Kopyala/Göster</span>
+                    </button>
+                    <!-- Kopyalama Geri Bildirim Kutusu (Modal) - Artık manuel kopyalama desteği sunuyor -->
+                    <div id="copy-feedback-modal" class="absolute hidden left-1/2 transform -translate-x-1/2 mt-3 p-3 bg-gray-900 text-white rounded-lg shadow-xl max-w-xs text-sm z-50 border border-emerald-500">
+                        <div class="text-left">
+                            <p class="text-emerald-400 font-bold mb-1">Kopyalandı!</p>
+                            <p id="copy-data-display" class="break-all text-xs"></p>
                         </div>
                     </div>
-                    <p id="book-listen-count" class="text-gray-600 text-sm mt-2 font-medium">Kitap Dinleme Sayısı: 0</p>
-                    <!-- İlerleme Sıfırla Düğmesi Eklendi -->
-                    <button id="reset-progress-btn" class="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg shadow-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 transition duration-200">
-                        İlerleme Sıfırla
-                    </button>
                 </div>
+                <!-- Bitiş: Kopyalama Özelliği -->
 
                 <audio id="audio-player" preload="auto" class="hidden"></audio>
 
@@ -226,119 +230,192 @@
 
     </div>
 
-    <script>
+    <script type="module">
         // Kitap verilerini doğrudan JavaScript içine gömdük
         const books = [
             {
-                id: 'tam-ilmhai',
-                title: 'Tam İlmhal Seadet-i Ebediyye',
+                id: 'tam-ilmihal',
+                title: 'Tam İlmihal Seadet-i Ebediyye',
                 imageUrl: 'https://www.hakikatkitabevi.net/images/books/B001.png',
                 topics: [
                     { id: 'BİRİNCİ KISIM', title: '--BİRİNCİ KISIM--', audio: '' },
-                    { id: '00 Giriş', title: '00 Giriş', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/1_Kisim/00_Giris.mp3' },
-                    { id: '00 Kitabda Bulunan Bilgiler', title: '00 Kitabda Bulunan Bilgiler', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/1_Kisim/00_Kitabda_Bulunan_Bilgiler.mp3' },
-                    { id: '00 Ön Kapak İçi', title: '00 Ön Kapak İçi', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/1_Kisim/00_On_Kapak_Ici.mp3' },
-                    { id: '00 Önsöz', title: '00 Önsöz', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/1_Kisim/00_Onsoz.mp3.mp3' },
-                    { id: '00 Tenbih', title: '00 Tenbih', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/1_Kisim/00_Tenbih.mp3' },
-                    { id: '01 Muhammed Aleyhisselama Uymak, Seadete Kavuşdurur', title: '01 Muhammed Aleyhisselama Uymak, Seadete Kavuşdurur', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/1_Kisim/01_Muhammed_Aleyhisselama_Uymak,_Seadete_Kavusdurur.mp3' },
-                    { id: '02 Allahü Tealaya İtaat İçin, Resûlüne İtaat Lazımdır', title: '02 Allahü Tealaya İtaat İçin, Resûlüne İtaat Lazımdır', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/1_Kisim/02_Allahu_Tealaya_Itaat_Icin,_Resulune_Itaat_Lazimdir.mp3' },
-                    { id: '03 Müsliman Olmak İçin Ne Yapmalı', title: '03 Müsliman Olmak İçin Ne Yapmalı', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/1_Kisim/03_Musliman_Olmak_Icin_Ne_Yapmali.mp3' },
-                    { id: '04 Ehli Sünnet Alimleri', title: '04 Ehli Sünnet Alimleri', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/1_Kisim/04_Ehl-i_Sunnet_Alimleri.mp3' },
-                    { id: '05 Ehli Sünnetin Reisi, İmamı Azam Ebu Hanifedir', title: '05 Ehli Sünnetin Reisi, İmamı Azam Ebu Hanifedir', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/1_Kisim/05_Ehl-i_Sunnetin_Reisi,_Imam-i_Azam_Ebu_Hanifedir.mp3' },
-                    { id: '06 İmamı Azamın Büyüklügü', title: '06 İmamı Azamın Büyüklügü', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/1_Kisim/06_Imam-i_Azamin_Buyuklugu.mp3' },
-                    { id: '07 İslam Alimlerinin Kitabları', title: '07 İslam Alimlerinin Kitabları', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/1_Kisim/07_Islam_Alimlerinin_Kitablari.mp3' },
-                    { id: '08 Uydurma Tefsir Yazan Kafir Olur', title: '08 Uydurma Tefsir Yazan Kafir Olur', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/1_Kisim/08_Uydurma_Tefsir_Yazan_Kafir_Olur.mp3' },
-                    { id: '09 Kuran Tercemelerinden Hangisine Güvenileceği', title: '09 Kuran Tercemelerinden Hangisine Güvenileceği', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/1_Kisim/09_Kuran_Tercemelerinden_Hangisine_Guvenilecegi.mp3' },
-                    { id: '10 Din Hırsızları', title: '10 Din Hırsızları', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/1_Kisim/10_Din_Hirsizlari.mp3' },
-                    { id: '11 İmanın Gitmesine Sebeb Olan Şeyler', title: '11 İmanın Gitmesine Sebeb Olan Şeyler', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/1_Kisim/11_Imanin_Gitmesine_Sebeb_Olan_Seyler.mp3' },
-                    { id: '12 Kalbde İman Bulunmasına Alamet', title: '12 Kalbde İman Bulunmasına Alamet', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/1_Kisim/12_Kalbde_Iman_Bulunmasina_Alamet.mp3' },
-                    { id: '13 Allahü Tealanın Nimetleri, Dünyada Herkesedir', title: '13 Allahü Tealanın Nimetleri, Dünyada Herkesedir', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/1_Kisim/13_Allahu_Tealanin_Nimetleri,_Dunyada_Herkesedir.mp3' },
-                    { id: '14 Ahıretde Kafire Merhamet Yokdur', title: '14 Ahıretde Kafire Merhamet Yokdur', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/1_Kisim/14_Ahiretde_Kafire_Merhamet_Yokdur.mp3' },
-                    { id: '15 Muhabbetin Alametleri', title: '15 Muhabbetin Alametleri', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/1_Kisim/15_Muhabbetin_Alametleri.mp3' },
-                    { id: '16 Muhammed Aleyhisselam, Allahü Tealanın Sevgilisidir', title: '16 Muhammed Aleyhisselam, Allahü Tealanın Sevgilisidir', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/1_Kisim/16_Muhammed_Aleyhisselam,_Allahu_Tealanin_Sevgilisidir.mp3' },
-                    { id: '17 Peygamberimizin Mucizeleri. Kuranı Kerimin Üstünlügü', title: '17 Peygamberimizin Mucizeleri. Kuranı Kerimin Üstünlügü', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/1_Kisim/17_Peygamberimizin_Mucizeleri._Kuran-i_Kerimin_Ustunlugu.mp3' },
-                    { id: '18 Resule Tabi Olmak Nasıl Olur', title: '18 Resule Tabi Olmak Nasıl Olur', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/1_Kisim/18_Resule_Tabi_Olmak_Nasil_Olur.mp3' },
-                    { id: '19 Hubbi Fillah, Buğdi Fillah. Kazaya Rıza Nasıl Olur', title: '19 Hubbi Fillah, Buğdi Fillah. Kazaya Rıza Nasıl Olur', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/1_Kisim/19_Hubb-i_Fillah,_Bugd-i_Fillah._Kazaya_Riza_Nasil_Olur.mp3' },
-                    { id: '20 Kafirler İki Kısmdır', title: '20 Kafirler İki Kısmdır', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/1_Kisim/20_Kafirler_Iki_Kismdir.mp3' },
-                    { id: '21 Cennete Girmek İçin', title: '21 Cennete Girmek İçin', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/1_Kisim/21_Cennete_Girmek_Icin.mp3' },
-                    { id: '22 Kafirlerin İyiliği Dünyada Kalır', title: '22 Kafirlerin İyiliği Dünyada Kalır', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/1_Kisim/22_Kafirlerin_Iyiligi_Dunyada_Kalir.mp3' },
-                    { id: '23 Dünya, Ahiretin Tarlasıdır', title: '23 Dünya, Ahiretin Tarlasıdır', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/1_Kisim/23_Dunya,_Ahiretin_Tarlasidir.mp3' },
-                    { id: '24 Ahiret Bilgileri, Aklın Dışındadır. Bunlara Akl Ermez', title: '24 Ahiret Bilgileri, Aklın Dışındadır. Bunlara Akl Ermez', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/1_Kisim/24_Ahiret_Bilgileri,_Aklin_Disindadir._Bunlara_Akl_Ermez.mp3' },
-                    { id: '25 Kuranı Kerim Nedir', title: '25 Kuranı Kerim Nedir', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/1_Kisim/25_Kuran-i_Kerim_Nedir.mp3' },
-                    { id: '26 İctihad Hataları. İmamı Azamın Büyüklüğü', title: '26 İctihad Hataları. İmamı Azamın Büyüklüğü', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/1_Kisim/26_Ictihad_Hatalari._Imam-i_Azamin_Buyuklugu.mp3' },
-                    { id: '27 İctihad Ne Demekdir', title: '27 İctihad Ne Demekdir', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/1_Kisim/27_Ictihad_Ne_Demekdir.mp3' },
-                    { id: '28 Sünneti Müekkede, Sünneti Zevaid', title: '28 Sünneti Müekkede, Sünneti Zevaid', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/1_Kisim/28_Sunnet-i_Muekkede,_Sunnet-i_Zevaid.mp3' },
-                    { id: '29 Kafirlerin Kullandığı Şeyler İki Dürlüdür', title: '29 Kafirlerin Kullandığı Şeyler İki Dürlüdür', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/1_Kisim/29_Kafirlerin_Kullandigi_Seyler_Iki_Durludur.mp3' },
-                    { id: '30 Resulullaha Uymak Yedi Derecedir', title: '30 Resulullaha Uymak Yedi Derecedir', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/1_Kisim/30_Resulullaha_Uymak_Yedi_Derecedir.mp3' },
-                    { id: '31 2.Cild 67.Mektub', title: '31 2.Cild 67.Mektub', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/1_Kisim/31_2.Cild_67.Mektub.mp3' },
-                    { id: '32 3.Cild 38.Mektub', title: '32 3.Cild 38.Mektub', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/1_Kisim/32_3.Cild_38.Mektub.mp3' },
-                    { id: '33 3.Cild 101.Mektub', title: '33 3.Cild 101.Mektub', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/1_Kisim/33_3.Cild_101.Mektub.mp3' },
-                    { id: '34 2.Cild 19.Mektub', title: '34 2.Cild 19.Mektub', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/1_Kisim/34_2.Cild_19.Mektub.mp3' },
-                    { id: '35 3.Cild 22.Mektub', title: '35 3.Cild 22.Mektub', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/1_Kisim/35_3.Cild_22.Mektub.mp3' },
-                    { id: '36 Bir Üniversiteliye Cevab', title: '36 Bir Üniversiteliye Cevab', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/1_Kisim/36_Bir_Universiteliye_Cevab.mp3' },
-                    { id: '37 2.Cild 31.Mektub', title: '37 2.Cild 31.Mektub', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/1_Kisim/37_2.Cild_31.Mektub.mp3' },
-                    { id: '38 2.Cild 89.Mektub', title: '38 2.Cild 89.Mektub', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/1_Kisim/38_2.Cild_89.Mektub.mp3' },
-                    { id: '39 2.Cild 58.Mektub', title: '39 2.Cild 58.Mektub', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/1_Kisim/39_2.Cild_58.Mektub.mp3' },
-                    { id: '40 3.Cild 31.Mektub', title: '40 3.Cild 31.Mektub', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/1_Kisim/40_3.Cild_31.Mektub.mp3' },
-                    { id: '41 4.Cild 29.Mektub', title: '41 4.Cild 29.Mektub', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/1_Kisim/41_4.Cild_29.Mektub.mp3' },
-                    { id: '42 2.Cild 81.Mektub', title: '42 2.Cild 81.Mektub', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/1_Kisim/42_2.Cild_81.Mektub.mp3' },
-                    { id: '43 2.Cild 66.Mektub', title: '43 2.Cild 66.Mektub', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/1_Kisim/43_2.Cild_66.Mektub.mp3' },
-                    { id: '44 2.Cild 82.Mektub', title: '44 2.Cild 82.Mektub', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/1_Kisim/44_2.Cild_82.Mektub.mp3' },
-                    { id: '45 3.Cild 1.Mektub', title: '45 3.Cild 1.Mektub', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/1_Kisim/45_3.Cild_1.Mektub.mp3' },
-                    { id: '46 3.Cild 17.Mektub', title: '46 3.Cild 17.Mektub', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/1_Kisim/46_3.Cild_17.Mektub.mp3' },
-                    { id: '47 3.Cild 34.Mektub', title: '47 3.Cild 34.Mektub', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/1_Kisim/47_3.Cild_34.Mektub.mp3' },
-                    { id: '48 3.Cild 35.Mektub', title: '48 3.Cild 35.Mektub', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/1_Kisim/48_3.Cild_35.Mektub.mp3' },
-                    { id: '49 3.Cild 57.Mektub', title: '49 3.Cild 57.Mektub', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/1_Kisim/49_3.Cild_57.Mektub.mp3' },
-                    { id: '50 Muhammed Masum Farukinin 1.Cild 14.Mektubu', title: '50 Muhammed Masum Farukinin 1.Cild 14.Mektubu', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/1_Kisim/50_Muhammed_Masum_Farukinin_1.Cild_14.Mektubu.mp3' },
-                    { id: '51 Beş Vakt Namaz', title: '51 Beş Vakt Nemaz', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/1_Kisim/51_Bes_Vakt_Nemaz.mp3' },
-                    { id: '52 Nemâzın Farzları (Abdest Almak)', title: '52 Namazın Farzları (Abdest Almak)', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/1_Kisim/52_Nemazin_Farzlari_(Abdest_Almak).mp3' },
-                    { id: '53 Mest Üstüne Mesh, Özr Sahibi Olmak', title: '53 Mest Üstüne Mesh, Özr Sahibi Olmak', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/1_Kisim/53_Mest_Ustune_Mesh,_Ozr_Sahibi_Olmak.mp3' },
-                    { id: '54 Gusl Abdesti', title: '54 Gusl Abdestii', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/1_Kisim/54_Gusl_Abdestii.mp3' },
-                    { id: '55 Teyemmüm', title: '55 Teyemmüm', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/1_Kisim/55_Teyemmum.mp3' },
-                    { id: '56 Necasetden Taharet', title: '56 Necasetden Taharet', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/1_Kisim/56_Necasetden_Taharet.mp3' },
-                    { id: '57 Sular ve Çeşidleri', title: '57 Sular ve Çeşidleri', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/1_Kisim/57_Sular_ve_Cesidleri.mp3' },
-                    { id: '58 Setri Avret ve Kadınların Örtünmesi', title: '58 Setri Avret ve Kadınların Örtünmesi', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/1_Kisim/58_Setr-i_Avret_ve_Kadinlarin_Ortunmesi.mp3' },
-                    { id: '59 İstikbali Kıble', title: '59 İstikbali Kıble', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/1_Kisim/59_Istikbal-i_Kible.mp3' },
-                    { id: '60 Namaz Vaktleri', title: '60 Namaz Vaktleri', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/1_Kisim/60_Nemaz_Vaktleri.mp3' },
-                    { id: '61 Ezan ve İkamet', title: '61 Ezan ve İkamet', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/1_Kisim/61_Ezan_ve_Ikamet.mp3' },
-                    { id: '62 1.Cild 303.Mektub', title: '62 1.Cild 303.Mektub', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/1_Kisim/62_1.Cild_303.Mektub.mp3' },
-                    { id: '63 Namazın Ehemmiyyeti', title: '63 Namazın Ehemmiyyeti', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/1_Kisim/63_Nemazin_Ehemmiyyeti.mp3' },
-                    { id: '64 Namaz Nasıl Kılınır', title: '64 Namaz Nasıl Kılınır', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/1_Kisim/64_Nemaz_Nasil_Kilinir.mp3' },
-                    { id: '65 Yolculukda Namaz', title: '65 Yolculukda Namaz', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/1_Kisim/65_Yolculukda_Nemaz.mp3' },
-                    { id: '66 Namazın Vacibleri, Secdei Sehv', title: '66 Namazın Vacibleri, Secdei Sehv', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/1_Kisim/66_Nemazin_Vacibleri,_Secde-i_Sehv.mp3' },
-                    { id: '67 Namazı Bozan Şeyler', title: '67 Namazı Bozan Şeyler', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/1_Kisim/67_Nemazi_Bozan_Seyler.mp3' },
-                    { id: '68 Namazın Mekruhları', title: '68 Namazın Mekruhları', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/1_Kisim/68_Nemazin_Mekruhlari.mp3' },
-                    { id: '69 Teravih Namazı ve Camilere Saygı', title: '69 Teravih Namazı ve Camilere Saygı', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/1_Kisim/69_Teravih_Nemazi_ve_Camilere_Saygi.mp3' },
-                    { id: '70 Cemaat İle Namaz', title: '70 Cemaat İle Namaz', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/1_Kisim/70_Cemaat_Ile_Nemaz.mp3' },
-                    { id: '71 Cuma Namazı', title: '71 Cuma Namazı', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/1_Kisim/71_Cuma_Nemazi.mp3' },
-                    { id: '72 Bayram Namazları', title: '72 Bayram Namazları', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/1_Kisim/72_Bayram_Nemazlari.mp3' },
-                    { id: '73 1.Cild 312.Mektub', title: '73 1.Cild 312.Mektub', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/1_Kisim/73_1.Cild_312.Mektub.mp3' },
-                    { id: '74 Kaza Namazları', title: '74 Kaza Namazları', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/1_Kisim/74_Kaza_Nemazlari.mp3' },
-                    { id: '75 2.Cild 20.Mektub', title: '75 2.Cild 20.Mektub', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/1_Kisim/75_2.Cild_20.Mektub.mp3' },
-                    { id: '76 2.Cild 87.Mektub', title: '76 2.Cild 87.Mektub', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/1_Kisim/76_2.Cild_87.Mektub.mp3' },
-                    { id: '77 2.Cild 69.Mektub', title: '77 2.Cild 69.Mektub', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/1_Kisim/77_2.Cild_69.Mektub.mp3' },
-                    { id: '78 Zekat Vermek', title: '78 Zekat Vermek', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/1_Kisim/78_Zekat_Vermek.mp3' },
-                    { id: '79 Ramezan Orucu', title: '79 Ramezan Orucu', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/1_Kisim/79_Ramezan_Orucu.mp3' },
-                    { id: '80 Sadaka-ı Fıtr', title: '80 Sadaka-ı Fıtr', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/1_Kisim/80_Sadaka-i_Fitr.mp3' },
-                    { id: '81 Kurban Kesmek', title: '81 Kurban Kesmek', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/1_Kisim/81_Kurban_Kesmek.mp3' },
-                    { id: '82 Adak', title: '82 Adak', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/1_Kisim/82_Adak.mp3' },
-                    { id: '83 Yemin-Yemin Keffareti', title: '83 Yemin-Yemin Keffareti', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/1_Kisim/83_Yemin-Yemin_Keffareti.mp3' },
-                    { id: '84 Hacca Gitmek', title: '84 Hacca Gitmek', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/1_Kisim/84_Hacca_Gitmek.mp3' },
-                    { id: '85 Mubarek Geceler', title: '85 Mubarek Geceler', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/1_Kisim/85_Mubarek_Geceler.mp3' },
-                    { id: '86 Şemsi Seneleri, Kameri Seneye Çevirmek', title: '86 Şemsi Seneleri, Kameri Seneye Çevirmek', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/1_Kisim/86_Semsi_Seneleri,_Kameri_Seneye_Cevirmek.mp3' },
-                    { id: '87 Kameri Seneyi, Miladiye Çevirmek', title: '87 Kameri Seneyi, Miladiye Çevirmek', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/1_Kisim/87_Kameri_Seneyi,_Miladiye_Cevirmek.mp3' },
-                    { id: '88 Hicri Sene Başının Hangi Gün Olduğunu Bulmak', title: '88 Hicri Sene Başının Hangi Gün Olduğunu Bulmak', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/1_Kisim/88_Hicri_Sene_Basinin_Hangi_Gun_Oldugunu_Bulmak.mp3' },
-                    { id: '89 Herhangi Bir Arabi Ayın Birinci Gününü Bulmak (Işık Usulü)', title: '89 Herhangi Bir Arabi Ayın Birinci Gününü Bulmak (Işık Usulü)', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/1_Kisim/89_Herhangi_Bir_Arabi_Ayin_Birinci_Gununu_Bulmak_(Isik_Usulu).mp3' },
-                    { id: '90 Selamlaşmak', title: '90 Selamlaşmak', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/1_Kisim/90_Selamlasmak.mp3' },
-                    { id: '91 Kuranı Kerim, Allah Kelamıdır', title: '91 Kuranı Kerim, Allah Kelamıdır', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/1_Kisim/91_Kuran-i_Kerim,_Allah_Kelamidir.mp3' },
-                    { id: '92 İsa Aleyhisselam İnsan idi, Ona Tapılmaz', title: '92 İsa Aleyhisselam İnsan idi, Ona Tapılmaz', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/1_Kisim/92_Isa_Aleyhisselam_Insan_idi,_Ona_Tapilmaz.mp3' },
-                    { id: '93 İsa Aleyhisselam Peygamberdir, Ona Tapılmaz', title: '93 İsa Aleyhisselam Peygamberdir, Ona Tapılmaz', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/1_Kisim/93_Isa_Aleyhisselam_Peygamberdir,_Ona_Tapilmaz.mp3' },
-                    { id: '94 2.Cild, 9.Mektub', title: '94 2.Cild, 9.Mektub', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/1_Kisim/94_2.Cild,_9.Mektub.mp3' },
-                    { id: '95 Hilyei Seadet', title: '95 Hilyei Seadet', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/1_Kisim/95_Hilye-i_Seadet.mp3' },
-                    { id: '96 Muhammed Aleyhisselamın Ahlakı', title: '96 Muhammed Aleyhisselamın Ahlakı', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/1_Kisim/96_Muhammed_Aleyhisselamin_Ahlaki.mp3' },
-                    { id: '97 Resulullahın Ana, Baba ve Dedeleri, Hep Mümin idi', title: '97 Resulullahın Ana, Baba ve Dedeleri, Hep Mümin idi', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/1_Kisim/97_Resulullahin_Ana,_Baba_ve_Dedeleri,_Hep_Mumin_idi.mp3' },
-                    { id: '98 Sübhane Rabbike Ayeti Kerimesi', title: '98 Sübhane Rabbike Ayeti Kerimesi', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/1_Kisim/98_Subhane_Rabbike_Ayet-i_Kerimesi.mp3' },
+                    { id: '00 Giriş', title: '00 Giriş', audio: 'Tam_İlmihal/Tam_İlmihal_1_Kisim/00 Giriş.mp3' },
+                    { id: '00 Kitabda Bulunan Bilgiler', title: '00 Kitabda Bulunan Bilgiler', audio: 'Tam_İlmihal/Tam_İlmihal_1_Kisim/00 Kitabda Bulunan Bilgiler.mp3' },
+                    { id: '00 Ön Kapak İçi', title: '00 Ön Kapak İçi', audio: 'Tam_İlmihal/Tam_İlmihal_1_Kisim/00 Ön Kapak İçi.mp3' },
+                    { id: '00 Önsöz', title: '00 Önsöz', audio: 'Tam_İlmihal/Tam_İlmihal_1_Kisim/00 Önsöz.mp3' },
+                    { id: '00 Tenbih', title: '00 Tenbih', audio: 'Tam_İlmihal/Tam_İlmihal_1_Kisim/00 Tenbih.mp3' },
+                    { id: '01 Muhammed Aleyhisselama Uymak Seadete Kavuşdurur', title: '01 Muhammed Aleyhisselama Uymak Seadete Kavuşdurur', audio: 'Tam_İlmihal/Tam_İlmihal_1_Kisim/01 Muhammed Aleyhisselama Uymak_ Seadete Kavuşdurur.mp3' },
+                    { id: '02 Allahü Tealaya İtaat İçin Resulüne İtaat Lazımdır', title: '02 Allahü Tealaya İtaat İçin Resulüne İtaat Lazımdır', audio: 'Tam_İlmihal/Tam_İlmihal_1_Kisim/02 Allahü Tealaya İtaat İçin_ Resulüne İtaat Lazımdır.mp3' },
+                    { id: '03 Müsliman Olmak İçin Ne Yapmalı', title: '03 Müsliman Olmak İçin Ne Yapmalı', audio: 'Tam_İlmihal/Tam_İlmihal_1_Kisim/03 Müsliman Olmak İçin Ne Yapmalı.mp3' },
+                    { id: '04 Ehl-i Sünnet Alimleri', title: '04 Ehl-i Sünnet Alimleri', audio: 'Tam_İlmihal/Tam_İlmihal_1_Kisim/04 Ehl-i Sünnet Alimleri.mp3' },
+                    { id: '05 Ehl-i Sünnetin Reisi İmam-ı Azam Ebu Hanifedir', title: '05 Ehl-i Sünnetin Reisi İmam-ı Azam Ebu Hanifedir', audio: 'Tam_İlmihal/Tam_İlmihal_1_Kisim/05 Ehl-i Sünnetin Reisi_ İmam-ı Azam Ebu Hanifedir.mp3' },
+                    { id: '06 İmam-ı Azamın Büyüklüğü', title: '06 İmam-ı Azamın Büyüklüğü', audio: 'Tam_İlmihal/Tam_İlmihal_1_Kisim/06 İmam-ı Azamın Büyüklüğü.mp3' },
+                    { id: '07 İslam Alimlerinin Kitabları', title: '07 İslam Alimlerinin Kitabları', audio: 'Tam_İlmihal/Tam_İlmihal_1_Kisim/07 İslam Alimlerinin Kitabları.mp3' },
+                    { id: '08 Uydurma Tefsir Yazan Kafir Olur', title: '08 Uydurma Tefsir Yazan Kafir Olur', audio: 'Tam_İlmihal/Tam_İlmihal_1_Kisim/08 Uydurma Tefsir Yazan Kafir Olur.mp3' },
+                    { id: '09 Kuran Tercemelerinden Hangisine Güvenileceği', title: '09 Kuran Tercemelerinden Hangisine Güvenileceği', audio: 'Tam_İlmihal/Tam_İlmihal_1_Kisim/09 Kuran Tercemelerinden Hangisine Güvenileceği.mp3' },
+                    { id: '10 Din Hırsızları', title: '10 Din Hırsızları', audio: 'Tam_İlmihal/Tam_İlmihal_1_Kisim/10 Din Hırsızları.mp3' },
+                    { id: '11 İmanın Gitmesine Sebeb Olan Şeyler', title: '11 İmanın Gitmesine Sebeb Olan Şeyler', audio: 'Tam_İlmihal/Tam_İlmihal_1_Kisim/11 İmanın Gitmesine Sebeb Olan Şeyler.mp3' },
+                    { id: '12 Kalbde İman Bulunmasına Alamet', title: '12 Kalbde İman Bulunmasına Alamet', audio: 'Tam_İlmihal/Tam_İlmihal_1_Kisim/12 Kalbde İman Bulunmasına Alamet.mp3' },
+                    { id: '13 Allahü Tealanın Nimetleri Dünyada Herkesedir', title: '13 Allahü Tealanın Nimetleri Dünyada Herkesedir', audio: 'Tam_İlmihal/Tam_İlmihal_1_Kisim/13 Allahü Tealanın Nimetleri_ Dünyada Herkesedir.mp3' },
+                    { id: '14 Ahiretde Kafire Merhamet Yokdur', title: '14 Ahiretde Kafire Merhamet Yokdur', audio: 'Tam_İlmihal/Tam_İlmihal_1_Kisim/14 Ahiretde Kafire Merhamet Yokdur.mp3' },
+                    { id: '15 Muhabbetin Alametleri', title: '15 Muhabbetin Alametleri', audio: 'Tam_İlmihal/Tam_İlmihal_1_Kisim/15 Muhabbetin Alametleri.mp3' },
+                    { id: '16 Muhammed Aleyhisselam Allahü Tealanın Sevgilisidir', title: '16 Muhammed Aleyhisselam Allahü Tealanın Sevgilisidir', audio: 'Tam_İlmihal/Tam_İlmihal_1_Kisim/16 Muhammed Aleyhisselam_ Allahü Tealanın Sevgilisidir.mp3' },
+                    { id: '17 Peygamberimizin Mucizeleri. Kuran-ı Kerimin Üstünlüğü', title: '17 Peygamberimizin Mucizeleri. Kuran-ı Kerimin Üstünlüğü', audio: 'Tam_İlmihal/Tam_İlmihal_1_Kisim/17 Peygamberimizin Mucizeleri. Kuran-ı Kerimin Üstünlüğü.mp3' },
+                    { id: '18 Resule Tabi Olmak Nasıl Olur', title: '18 Resule Tabi Olmak Nasıl Olur', audio: 'Tam_İlmihal/Tam_İlmihal_1_Kisim/18 Resule Tabi Olmak Nasıl Olur.mp3' },
+                    { id: '19 Hubb-i Fillah Bugd-i Fillah. Kazaya Rıza Nasıl Olur', title: '19 Hubb-i Fillah Bugd-i Fillah. Kazaya Rıza Nasıl Olur', audio: 'Tam_İlmihal/Tam_İlmihal_1_Kisim/19 Hubb-i Fillah_ Bugd-i Fillah. Kazaya Rıza Nasıl Olur.mp3' },
+                    { id: '20 Kafirler İki Kısmdır', title: '20 Kafirler İki Kısmdır', audio: 'Tam_İlmihal/Tam_İlmihal_1_Kisim/20 Kafirler İki Kısmdır.mp3' },
+                    { id: '21 Cennete Girmek İçin', title: '21 Cennete Girmek İçin', audio: 'Tam_İlmihal/Tam_İlmihal_1_Kisim/21 Cennete Girmek İçin.mp3' },
+                    { id: '22 Kafirlerin İyiliği Dünyada Kalır', title: '22 Kafirlerin İyiliği Dünyada Kalır', audio: 'Tam_İlmihal/Tam_İlmihal_1_Kisim/22 Kafirlerin İyiliği Dünyada Kalır.mp3' },
+                    { id: '23 Dünya Ahiretin Tarlasıdır', title: '23 Dünya Ahiretin Tarlasıdır', audio: 'Tam_İlmihal/Tam_İlmihal_1_Kisim/23 Dünya_ Ahiretin Tarlasıdır.mp3' },
+                    { id: '24 Ahiret Bilgileri Aklın Dışındadır. Bunlara Akl Ermez', title: '24 Ahiret Bilgileri Aklın Dışındadır. Bunlara Akl Ermez', audio: 'Tam_İlmihal/Tam_İlmihal_1_Kisim/24 Ahiret Bilgileri_ Aklın Dışındadır. Bunlara Akl Ermez.mp3' },
+                    { id: '25 Kuran-ı Kerim Nedir', title: '25 Kuran-ı Kerim Nedir', audio: 'Tam_İlmihal/Tam_İlmihal_1_Kisim/25 Kuran-ı Kerim Nedir.mp3' },
+                    { id: '26 İçtihad Hataları. İmam-ı Azamın Büyüklüğü', title: '26 İçtihad Hataları. İmam-ı Azamın Büyüklüğü', audio: 'Tam_İlmihal/Tam_İlmihal_1_Kisim/26 İçtihad Hataları. İmam-ı_Azamın Büyüklüğü.mp3' },
+                    { id: '27 İçtihad Ne Demekdir', title: '27 İçtihad Ne Demekdir', audio: 'Tam_İlmihal/Tam_İlmihal_1_Kisim/27 İçtihad Ne Demekdir.mp3' },
+                    { id: '28 Sünnet-i Müekkede Sünnet-i Zevaid', title: '28 Sünnet-i Müekkede Sünnet-i Zevaid', audio: 'Tam_İlmihal/Tam_İlmihal_1_Kisim/28 Sünnet-ı Müekkede_ Sünnet-i Zevaid.mp3' },
+                    { id: '29 Kâfirlerin kullandıgı seyler iki dürlüdür', title: '29 Kâfirlerin kullandıgı seyler iki dürlüdür', audio: 'Tam_İlmihal/Tam_İlmihal_1_Kisim/29 Kâfirlerin kullandıgı seyler iki dürlüdür.mp3' },
+                    { id: '30 Resûlullaha uymak yedi derecedir', title: '30 Resûlullaha uymak yedi derecedir', audio: 'Tam_İlmihal/Tam_İlmihal_1_Kisim/30 Resûlullaha uymak yedi derecedir.mp3' },
+                    { id: '31 2.Cild 67.Mektub Ehl-i sünnet i’tikâdı harâmlar. Tevbe. Mehdî “aleyhirrahme”', title: '31 2.Cild 67.Mektub Ehl-i sünnet i’tikâdı harâmlar. Tevbe. Mehdî “aleyhirrahme”', audio: 'Tam_İlmihal/Tam_İlmihal_1_Kisim/31 2.Cild 67.Mektub Ehl-i sünnet i’tikâdı_ harâmlar. Tevbe. Mehdî “aleyhirrahme”.mp3' },
+                    { id: '32 3.Cild 38.Mektub Bu ümmet yetmisüç fırkaya ayrılacakdır', title: '32 3.Cild 38.Mektub Bu ümmet yetmisüç fırkaya ayrılacakdır', audio: 'Tam_İlmihal/Tam_İlmihal_1_Kisim/32 3.Cild 38.Mektub Bu ümmet yetmisüç fırkaya ayrılacakdır.mp3' },
+                    { id: '33 3.Cild 101.Mektub Kur’ân-ı kerîmi felsefecilere göre tefsîr câiz degildir', title: '33 3.Cild 101.Mektub Kur’ân-ı kerîmi felsefecilere göre tefsîr câiz degildir', audio: 'Tam_İlmihal/Tam_İlmihal_1_Kisim/33 3.Cild 101.Mektub Kur’ân-ı kerîmi felsefecilere göre tefsîr câiz degildir.mp3' },
+                    { id: '34 2.Cild 19.Mektub Sünnete yapısmak bid’atlerden sakınmak lâzımdır', title: '34 2.Cild 19.Mektub Sünnete yapısmak bid’atlerden sakınmak lâzımdır', audio: 'Tam_İlmihal/Tam_İlmihal_1_Kisim/34 2.Cild 19.Mektub Sünnete yapısmak_ bid’atlerden sakınmak lâzımdır.mp3' },
+                    { id: '35 3.Cild 22.Mektub Müsriklerin bedenleri pis degildir. I’tikâdları pisdir', title: '35 3.Cild 22.Mektub Müsriklerin bedenleri pis degildir. I’tikâdları pisdir', audio: 'Tam_İlmihal/Tam_İlmihal_1_Kisim/35 3.Cild 22.Mektub Müsriklerin bedenleri pis degildir. I’tikâdları pisdir.mp3' },
+                    { id: '36 Bir üniversiteliye cevâb. Fen bilgileri bir yaratıcının var', title: '36 Bir üniversiteliye cevâb. Fen bilgileri bir yaratıcının var', audio: 'Tam_İlmihal/Tam_İlmihal_1_Kisim/36 Bir üniversiteliye cevâb. Fen bilgileri_ bir yaratıcının var.mp3' },
+                    { id: '37 2.Cild 31.Mektub Dünyâya burada kalacak kadar âhırete de orada kalacak', title: '37 2.Cild 31.Mektub Dünyâya burada kalacak kadar âhırete de orada kalacak', audio: 'Tam_İlmihal/Tam_İlmihal_1_Kisim/37 2.Cild 31.Mektub Dünyâya_ burada kalacak kadar_ âhırete de orada kalacak.mp3' },
+                    { id: '38 2.Cild 89.Mektub Dünyâda âhırete yarar is görmek lâzımdır', title: '38 2.Cild 89.Mektub Dünyâda âhırete yarar is görmek lâzımdır', audio: 'Tam_İlmihal/Tam_İlmihal_1_Kisim/38 2.Cild 89.Mektub Dünyâda âhırete yarar is görmek lâzımdır.mp3' },
+                    { id: '39 2.Cild 58.Mektub Tenâsuh ve iki rûhluluk yokdur. Âlem-i misâl Fen', title: '39 2.Cild 58.Mektub Tenâsuh ve iki rûhluluk yokdur. Âlem-i misâl Fen', audio: 'Tam_İlmihal/Tam_İlmihal_1_Kisim/39 2.Cild 58.Mektub Tenâsuh ve iki rûhluluk yokdur. Âlem-i misâl_ Fen.mp3' },
+                    { id: '40 3.Cild 31.Mektub Âlem-i ervâh ve âlem-i misâl ve âlem-i ecsâd. Kabr azâbı', title: '40 3.Cild 31.Mektub Âlem-i ervâh ve âlem-i misâl ve âlem-i ecsâd. Kabr azâbı', audio: 'Tam_İlmihal/Tam_İlmihal_1_Kisim/40 3.Cild 31.Mektub Âlem-i ervâh ve âlem-i misâl ve âlem-i ecsâd. Kabr azâbı.mp3' },
+                    { id: '41 4.Cild 29.Mektub Emr-i bil-ma’rûf nehy-i anil-münker ve cihâd sevâbı çokdur', title: '41 4.Cild 29.Mektub Emr-i bil-ma’rûf nehy-i anil-münker ve cihâd sevâbı çokdur', audio: 'Tam_İlmihal/Tam_İlmihal_1_Kisim/41 4.Cild 29.Mektub Emr-i bil-ma’rûf_ nehy-i anil-münker ve cihâd sevâbı çokdur.mp3' },
+                    { id: '42 2.Cild 81.Mektub Vera’ ve takvâ. Hâlis ibâdetin alâmeti nedir', title: '42 2.Cild 81.Mektub Vera’ ve takvâ. Hâlis ibâdetin alâmeti nedir', audio: 'Tam_İlmihal/Tam_İlmihal_1_Kisim/42 2.Cild 81.Mektub Vera’ ve takvâ. Hâlis ibâdetin alâmeti nedir.mp3' },
+                    { id: '43 2.Cild 66.Mektub Tevbe vera’ ve takvâ', title: '43 2.Cild 66.Mektub Tevbe vera’ ve takvâ', audio: 'Tam_İlmihal/Tam_İlmihal_1_Kisim/43 2.Cild 66.Mektub Tevbe_ vera’ ve takvâ.mp3' },
+                    { id: '44 2.Cild 82.Mektub Farz sünnet ve nâfilelerin ehemmiyyetleri ve farkları', title: '44 2.Cild 82.Mektub Farz sünnet ve nâfilelerin ehemmiyyetleri ve farkları', audio: 'Tam_İlmihal/Tam_İlmihal_1_Kisim/44 2.Cild 82.Mektub Farz_ sünnet ve nâfilelerin ehemmiyyetleri ve farkları.mp3' },
+                    { id: '45 3.Cild 1.Mektub Allahü teâlânın yakın olması ne demekdir', title: '45 3.Cild 1.Mektub Allahü teâlânın yakın olması ne demekdir', audio: 'Tam_İlmihal/Tam_İlmihal_1_Kisim/45 3.Cild 1.Mektub Allahü teâlânın yakın olması ne demekdir.mp3' },
+                    { id: '46 3.Cild 17.Mektub Îmân ibâdetler ve lüzûmlu nasîhatler', title: '46 3.Cild 17.Mektub Îmân ibâdetler ve lüzûmlu nasîhatler', audio: 'Tam_İlmihal/Tam_İlmihal_1_Kisim/46 3.Cild 17.Mektub Îmân_ ibâdetler ve lüzûmlu nasîhatler.mp3' },
+                    { id: '47 3.Cild 34.Mektub Îmân ibâdetler harâmlar', title: '47 3.Cild 34.Mektub Îmân ibâdetler harâmlar', audio: 'Tam_İlmihal/Tam_İlmihal_1_Kisim/47 3.Cild 34.Mektub Îmân_ ibâdetler_ harâmlar.mp3' },
+                    { id: '48 3.Cild 35.Mektub Gençlikde yapılan ibâdetlerin kıymeti', title: '48 3.Cild 35.Mektub Gençlikde yapılan ibâdetlerin kıymeti', audio: 'Tam_İlmihal/Tam_İlmihal_1_Kisim/48 3.Cild 35.Mektub Gençlikde yapılan ibâdetlerin kıymeti.mp3' },
+                    { id: '49 3.Cild 57.Mektub Âlemler hersey yokdan var edildi. Yunan felesofları', title: '49 3.Cild 57.Mektub Âlemler hersey yokdan var edildi. Yunan felesofları', audio: 'Tam_İlmihal/Tam_İlmihal_1_Kisim/49 3.Cild 57.Mektub Âlemler_ hersey yokdan var edildi. Yunan felesofları.mp3' },
+                    { id: '50 Muhammed Masum Farukinin 1.Cild 14.Mektubu', title: '50 Muhammed Masum Farukinin 1.Cild 14.Mektubu', audio: 'Tam_İlmihal/Tam_İlmihal_1_Kisim/50 Muhammed Masum Farukinin 1.Cild 14.Mektubu.mp3' },
+                    { id: '51 Bes vakt nemâz', title: '51 Bes vakt nemâz', audio: 'Tam_İlmihal/Tam_İlmihal_1_Kisim/51 Bes vakt nemâz_.mp3' },
+                    { id: '52 Abdest almak. Abdesti bozan seyler', title: '52 Abdest almak. Abdesti bozan seyler', audio: 'Tam_İlmihal/Tam_İlmihal_1_Kisim/52 Abdest almak. Abdesti bozan seyler.mp3' },
+                    { id: '53 Mest üzerine mesh özr sâhibi olmak', title: '53 Mest üzerine mesh özr sâhibi olmak', audio: 'Tam_İlmihal/Tam_İlmihal_1_Kisim/53 Mest üzerine mesh_ özr sâhibi olmak.mp3' },
+                    { id: '54 Gusl abdesti', title: '54 Gusl abdesti', audio: 'Tam_İlmihal/Tam_İlmihal_1_Kisim/54 Gusl abdesti.mp3' },
+                    { id: '55 Teyemmum', title: '55 Teyemmum', audio: 'Tam_İlmihal/Tam_İlmihal_1_Kisim/55 Teyemmum.mp3' },
+                    { id: '56 Necasetden Taharet', title: '56 Necasetden Taharet', audio: 'Tam_İlmihal/Tam_İlmihal_1_Kisim/56 Necasetden Taharet.mp3' },
+                    { id: '57 Sular ve Çeşitleri', title: '57 Sular ve Çeşitleri', audio: 'Tam_İlmihal/Tam_İlmihal_1_Kisim/57 Sular ve Çeşitleri.mp3' },
+                    { id: '58 Setr-i avret. Kadınların örtünmesi', title: '58 Setr-i avret. Kadınların örtünmesi', audio: 'Tam_İlmihal/Tam_İlmihal_1_Kisim/58 Setr-i avret. Kadınların örtünmesi.mp3' },
+                    { id: '59 Istikbâl-i kıble', title: '59 Istikbâl-i kıble', audio: 'Tam_İlmihal/Tam_İlmihal_1_Kisim/59 Istikbâl-i kıble.mp3' },
+                    { id: '60 Nemaz Vaktleri', title: '60 Nemaz Vaktleri', audio: 'Tam_İlmihal/Tam_İlmihal_1_Kisim/60 Nemaz Vaktleri.mp3' },
+                    { id: '61 Ezan ve İkamet', title: '61 Ezan ve İkamet', audio: 'Tam_İlmihal/Tam_İlmihal_1_Kisim/61 Ezan ve İkamet.mp3' },
+                    { id: '62 1.Cild 303.Mektub', title: '62 1.Cild 303.Mektub', audio: 'Tam_İlmihal/Tam_İlmihal_1_Kisim/62 1.Cild 303.Mektub.mp3' },
+                    { id: '63 Nemazın Ehemmiyyeti', title: '63 Nemazın Ehemmiyyeti', audio: 'Tam_İlmihal/Tam_İlmihal_1_Kisim/63 Nemazın Ehemmiyyeti.mp3' },
+                    { id: '64 Nemâz nasıl kılınır', title: '64 Nemâz nasıl kılınır', audio: 'Tam_İlmihal/Tam_İlmihal_1_Kisim/64 Nemâz nasıl kılınır.mp3' },
+                    { id: '65 Yolculukda Nemaz', title: '65 Yolculukda Nemaz', audio: 'Tam_İlmihal/Tam_İlmihal_1_Kisim/65 Yolculukda Nemaz.mp3' },
+                    { id: '66 Nemâzın vâcibleri secde-i sehv secde-i tilâvet ve vitr nemâzı', title: '66 Nemâzın vâcibleri secde-i sehv secde-i tilâvet ve vitr nemâzı', audio: 'Tam_İlmihal/Tam_İlmihal_1_Kisim/66 Nemâzın vâcibleri_ secde-i sehv_ secde-i tilâvet ve vitr nemâzı.mp3' },
+                    { id: '67 Nemâzı bozan seyler. Kâfirlere tesebbüh', title: '67 Nemâzı bozan seyler. Kâfirlere tesebbüh', audio: 'Tam_İlmihal/Tam_İlmihal_1_Kisim/67 Nemâzı bozan seyler. Kâfirlere tesebbüh.mp3' },
+                    { id: '68 Nemâzın mekrûhları nemâzı bozmak için özr', title: '68 Nemâzın mekrûhları nemâzı bozmak için özr', audio: 'Tam_İlmihal/Tam_İlmihal_1_Kisim/68 Nemâzın mekrûhları_ nemâzı bozmak için özr.mp3' },
+                    { id: '69 Câmi’de yapılması câiz olmıyan seyler. Terâvih nemâzı Camilere Saygı', title: '69 Câmi’de yapılması câiz olmıyan seyler. Terâvih nemâzı Camilere Saygı', audio: 'Tam_İlmihal/Tam_İlmihal_1_Kisim/69 Câmi’de yapılması câiz olmıyan seyler. Terâvih nemâzı_ Camilere Saygı.mp3' },
+                    { id: '70 Cemâ’at ile nemâz kılmak. Hoparlörle radyo ile nemâz', title: '70 Cemâ’at ile nemâz kılmak. Hoparlörle radyo ile nemâz', audio: 'Tam_İlmihal/Tam_İlmihal_1_Kisim/70 Cemâ’at ile nemâz kılmak. Hoparlörle_ radyo ile nemâz.mp3' },
+                    { id: '71 Cum’a nemâzı. Ibâdet ne demekdir', title: '71 Cum’a nemâzı. Ibâdet ne demekdir', audio: 'Tam_İlmihal/Tam_İlmihal_1_Kisim/71 Cum’a nemâzı. Ibâdet ne demekdir.mp3' },
+                    { id: '72 Bayram nemâzı. Kurban bayramı tekbîrleri', title: '72 Bayram nemâzı. Kurban bayramı tekbîrleri', audio: 'Tam_İlmihal/Tam_İlmihal_1_Kisim/72 Bayram nemâzı. Kurban bayramı tekbîrleri.mp3' },
+                    { id: '73 1.Cild 312.Mektub Nemâzda otururken parmak kaldırmak', title: '73 1.Cild 312.Mektub Nemâzda otururken parmak kaldırmak', audio: 'Tam_İlmihal/Tam_İlmihal_1_Kisim/73 1.Cild 312.Mektub Nemâzda otururken parmak kaldırmak.mp3' },
+                    { id: '74 Kazâ nemâzları. Nemâz kılmıyanın cezâsı', title: '74 Kazâ nemâzları. Nemâz kılmıyanın cezâsı', audio: 'Tam_İlmihal/Tam_İlmihal_1_Kisim/74 Kazâ nemâzları. Nemâz kılmıyanın cezâsı.mp3' },
+                    { id: '75 2.Cild 20.Mektub Nemâz ibâdetlerin en üstünüdür', title: '75 2.Cild 20.Mektub Nemâz ibâdetlerin en üstünüdür', audio: 'Tam_İlmihal/Tam_İlmihal_1_Kisim/75 2.Cild 20.Mektub Nemâz ibâdetlerin en üstünüdür.mp3' },
+                    { id: '76 2.Cild 87.Mektub Nemâzın ta’dîl-i erkânı. Kul hakkı', title: '76 2.Cild 87.Mektub Nemâzın ta’dîl-i erkânı. Kul hakkı', audio: 'Tam_İlmihal/Tam_İlmihal_1_Kisim/76 2.Cild 87.Mektub Nemâzın ta’dîl-i erkânı. Kul hakkı.mp3' },
+                    { id: '77 2.Cild 69.Mektub Nemâzı dogru kılmalı. Halâl lokma. Sehîd kime denir', title: '77 2.Cild 69.Mektub Nemâzı dogru kılmalı. Halâl lokma. Sehîd kime denir', audio: 'Tam_İlmihal/Tam_İlmihal_1_Kisim/77 2.Cild 69.Mektub Nemâzı dogru kılmalı. Halâl lokma. Sehîd kime denir.mp3' },
+                    { id: '78 Zekât vermek. Para mal hayvan ve toprak mahsûllerinin zekâtı', title: '78 Zekât vermek. Para mal hayvan ve toprak mahsûllerinin zekâtı', audio: 'Tam_İlmihal/Tam_İlmihal_1_Kisim/78 Zekât vermek. Para_ mal_ hayvan ve toprak mahsûllerinin zekâtı.mp3' },
+                    { id: '79 Ramezân-ı serîfin kıymeti. Oruc nasıl tutulur', title: '79 Ramezân-ı serîfin kıymeti. Oruc nasıl tutulur', audio: 'Tam_İlmihal/Tam_İlmihal_1_Kisim/79 Ramezân-ı serîfin kıymeti. Oruc nasıl tutulur.mp3' },
+                    { id: '80 Sadaka-i fıtrı kimler verir Kimlere vermelidir', title: '80 Sadaka-i fıtrı kimler verir Kimlere vermelidir', audio: 'Tam_İlmihal/Tam_İlmihal_1_Kisim/80 Sadaka-i fıtrı kimler verir Kimlere vermelidir.mp3' },
+                    { id: '81 Kurban kesmek lâzımdır. Kimler keser Nasıl kesilir', title: '81 Kurban kesmek lâzımdır. Kimler keser Nasıl kesilir', audio: 'Tam_İlmihal/Tam_İlmihal_1_Kisim/81 Kurban kesmek lâzımdır. Kimler keser Nasıl kesilir.mp3' },
+                    { id: '82 Adak ne demekdir Günâh olan adaklar', title: '82 Adak ne demekdir Günâh olan adaklar', audio: 'Tam_İlmihal/Tam_İlmihal_1_Kisim/82 Adak ne demekdir Günâh olan adaklar.mp3' },
+                    { id: '83 Yemîn nasıl edilir Yemînin çesidleri. Yemîn keffâreti', title: '83 Yemîn nasıl edilir Yemînin çesidleri. Yemîn keffâreti', audio: 'Tam_İlmihal/Tam_İlmihal_1_Kisim/83 Yemîn nasıl edilir Yemînin çesidleri. Yemîn keffâreti.mp3' },
+                    { id: '84 Hacca gitmek. Hac nasıl yapılır', title: '84 Hacca gitmek. Hac nasıl yapılır', audio: 'Tam_İlmihal/Tam_İlmihal_1_Kisim/84 Hacca gitmek. Hac nasıl yapılır.mp3' },
+                    { id: '85 Mübârek geceler. Kandiller. Peygamberimizin mi’râcı nasıl oldu', title: '85 Mübârek geceler. Kandiller. Peygamberimizin mi’râcı nasıl oldu', audio: 'Tam_İlmihal/Tam_İlmihal_1_Kisim/85 Mübârek geceler. Kandiller. Peygamberimizin mi’râcı nasıl oldu.mp3' },
+                    { id: '86 Şemsî seneleri kamerî seneye çevirmek', title: '86 Şemsî seneleri kamerî seneye çevirmek', audio: 'Tam_İlmihal/Tam_İlmihal_1_Kisim/86 Şemsî seneleri kamerî seneye çevirmek.mp3' },
+                    { id: '87 Kamerî seneyi mîlâdî seneye çevirmek', title: '87 Kamerî seneyi mîlâdî seneye çevirmek', audio: 'Tam_İlmihal/Tam_İlmihal_1_Kisim/87 Kamerî seneyi mîlâdî seneye çevirmek.mp3' },
+                    { id: '88 Hicrî sene basının hangi gün oldugunu bulmak', title: '88 Hicrî sene basının hangi gün oldugunu bulmak', audio: 'Tam_İlmihal/Tam_İlmihal_1_Kisim/88 Hicrî sene basının_ hangi gün oldugunu bulmak.mp3' },
+                    { id: '89 Arabî ayların birinci gününü bulmak', title: '89 Arabî ayların birinci gününü bulmak', audio: 'Tam_İlmihal/Tam_İlmihal_1_Kisim/89 Arabî ayların birinci gününü bulmak.mp3' },
+                    { id: '90 Selâmlasmak nasıl olur Müsâfeha nasıl yapılır', title: '90 Selâmlasmak nasıl olur Müsâfeha nasıl yapılır', audio: 'Tam_İlmihal/Tam_İlmihal_1_Kisim/90 Selâmlasmak nasıl olur Müsâfeha nasıl yapılır.mp3' },
+                    { id: '91 Kur’ân-ı kerîm Allah kelâmıdır', title: '91 Kur’ân-ı kerîm Allah kelâmıdır', audio: 'Tam_İlmihal/Tam_İlmihal_1_Kisim/91 Kur’ân-ı kerîm_ Allah kelâmıdır.mp3' },
+                    { id: '92 Îsâ “aleyhisselâm” insan idi Ona tapılmaz', title: '92 Îsâ “aleyhisselâm” insan idi Ona tapılmaz', audio: 'Tam_İlmihal/Tam_İlmihal_1_Kisim/92 Îsâ “aleyhisselâm” insan idi_ Ona tapılmaz.mp3' },
+                    { id: '93 Îsâ “aleyhisselâm” Peygamber idi Ona tapılmaz', title: '93 Îsâ “aleyhisselâm” Peygamber idi Ona tapılmaz', audio: 'Tam_İlmihal/Tam_İlmihal_1_Kisim/93 Îsâ “aleyhisselâm” Peygamber idi_ Ona tapılmaz.mp3' },
+                    { id: '94 2.Cild 9.Mektub Allahü teâlâ akl ile hayâl ile anlasılamaz. Gayba îmân etmek', title: '94 2.Cild 9.Mektub Allahü teâlâ akl ile hayâl ile anlasılamaz. Gayba îmân etmek', audio: 'Tam_İlmihal/Tam_İlmihal_1_Kisim/94 2.Cild _9.Mektub Allahü teâlâ akl ile_ hayâl ile anlasılamaz. Gayba îmân etmek.mp3' },
+                    { id: '95 Hilye-i se’âdet. Siyer kitâbları. Resûlullahın zevceleri', title: '95 Hilye-i se’âdet. Siyer kitâbları. Resûlullahın zevceleri', audio: 'Tam_İlmihal/Tam_İlmihal_1_Kisim/95 Hilye-i se’âdet. Siyer kitâbları. Resûlullahın zevceleri.mp3' },
+                    { id: '96 Muhammed aleyhisselâmın güzel ahlâkı', title: '96 Muhammed aleyhisselâmın güzel ahlâkı', audio: 'Tam_İlmihal/Tam_İlmihal_1_Kisim/96 Muhammed aleyhisselâmın güzel ahlâkı.mp3' },
+                    { id: '97 Resûlullahın ana baba ve bütün dedeleri hep mü’min sâlih idi', title: '97 Resûlullahın ana baba ve bütün dedeleri hep mü’min_ sâlih idi.mp3' },
+                    { id: '98 Sübhâne rabbike âyet-i kerîmesi nasıl okunur', title: '98 Sübhâne rabbike âyet-i kerîmesi nasıl okunur', audio: 'Tam_İlmihal/Tam_İlmihal_1_Kisim/98 Sübhâne rabbike âyet-i kerîmesi nasıl okunur.mp3' },
                     { id: 'İKİNCİ KISIM', title: '--İKİNCİ KISIM--', audio: '' },
+					  { id: '01_3.Cild_105.Mektub', title: '01_3.Cild_105.Mektub', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/2_Kisim/01_3.Cild_105.Mektub.mp3' },
+					  { id: '02_3.Cild_47.Mektub', title: '02_3.Cild_47.Mektub', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/2_Kisim/02_3.Cild_47.Mektub.mp3' },
+					  { id: '03_3.Cild_13.Mektub', title: '03_3.Cild_13.Mektub', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/2_Kisim/03_3.Cild_13.Mektub.mp3' },
+					  { id: '04_Adalet_Akl_Iman_Kaza_ve_Kader', title: '04_Adalet_Akl_Iman_Kaza_ve_Kader', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/2_Kisim/04_Adalet_Akl_Iman_Kaza_ve_Kader.mp3' },
+					  { id: '05_Tefsir_Kitablari_Hadis-i_Serifler', title: '05_Tefsir_Kitablari_Hadis-i_Serifler', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/2_Kisim/05_Tefsir_Kitablari_Hadis-i_Serifler.mp3' },
+					  { id: '06_Hadis-i_Seriflerin_Cesidleri', title: '06_Hadis-i_Seriflerin_Cesidleri', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/2_Kisim/06_Hadis-i_Seriflerin_Cesidleri.mp3' },
+					  { id: '07_3.Cild_54.Mektub', title: '07_3.Cild_54.Mektub', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/2_Kisim/07_3.Cild_54.Mektub.mp3' },
+					  { id: '08_3.Cild_59.Mektub', title: '08_3.Cild_59.Mektub', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/2_Kisim/08_3.Cild_59.Mektub.mp3' },
+					  { id: '09_3.Cild_7.Mektub', title: '09_3.Cild_7.Mektub', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/2_Kisim/09_3.Cild_7.Mektub.mp3' },
+					  { id: '10_2.Cild_29.Mektub', title: '10_2.Cild_29.Mektub', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/2_Kisim/10_2.Cild_29.Mektub.mp3' },
+					  { id: '11_2.Cild_32.Mektub', title: '11_2.Cild_32.Mektub', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/2_Kisim/11_2.Cild_32.Mektub.mp3' },
+					  { id: '12_2.Cild_75.Mektub', title: '12_2.Cild_75.Mektub', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/2_Kisim/12_2.Cild_75.Mektub.mp3' },
+					  { id: '13_3.Cild_27.Mektub', title: '13_3.Cild_27.Mektub', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/2_Kisim/13_3.Cild_27.Mektub.mp3' },
+					  { id: '14_2.Cild_53.Mektub', title: '14_2.Cild_53.Mektub', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/2_Kisim/14_2.Cild_53.Mektub.mp3' },
+					  { id: '15_Allahu_Tealanin_Ismleri', title: '15_Allahu_Tealanin_Ismleri', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/2_Kisim/15_Allahu_Tealanin_Ismleri.mp3' },
+					  { id: '16_Fikh_Mezheb_Imam-i_Azam', title: '16_Fikh_Mezheb_Imam-i_Azam', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/2_Kisim/16_Fikh_Mezheb_Imam-i_Azam.mp3' },
+					  { id: '17_Vehhabilik_Nedir', title: '17_Vehhabilik_Nedir', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/2_Kisim/17_Vehhabilik_Nedir.mp3' },
+					  { id: '18_Sefaat_Olulere_Yardim', title: '18_Sefaat_Olulere_Yardim', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/2_Kisim/18_Sefaat_Olulere_Yardim.mp3' },
+					  { id: '19_2.Cild_60.Mektub', title: '19_2.Cild_60.Mektub', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/2_Kisim/19_2.Cild_60.Mektub.mp3' },
+					  { id: '20_3.Cild_36.Mektub', title: '20_3.Cild_36.Mektub', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/2_Kisim/20_3.Cild_36.Mektub.mp3' },
+					  { id: '21_Bozuk_Dinler', title: '21_Bozuk_Dinler', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/2_Kisim/21_Bozuk_Dinler.mp3' },
+					  { id: '22_Hurufilik', title: '22_Hurufilik', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/2_Kisim/22_Hurufilik.mp3' },
+					  { id: '23_2.Cild_96.Mektub', title: '23_2.Cild_96.Mektub', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/2_Kisim/23_2.Cild_96.Mektub.mp3' },
+					  { id: '24_5.Cild_36.Mektub', title: '24_5.Cild_36.Mektub', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/2_Kisim/24_5.Cild_36.Mektub.mp3' },
+					  { id: '25_2.Cild_99.Mektub', title: '25_2.Cild_99.Mektub', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/2_Kisim/25_2.Cild_99.Mektub.mp3' },
+					  { id: '26_Sosyal_Adalet_Sosyalizm_Kapitalizm', title: '26_Sosyal_Adalet_Sosyalizm_Kapitalizm', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/2_Kisim/26_Sosyal_Adalet_Sosyalizm_Kapitalizm.mp3' },
+					  { id: '27_Islam_Dini', title: '27_Islam_Dini', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/2_Kisim/27_Islam_Dini.mp3' },
+					  { id: '28_Nefs_ve_Akl', title: '28_Nefs_ve_Akl', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/2_Kisim/28_Nefs_ve_Akl.mp3' },
+					  { id: '29_Muslimanlar_Nicin_Geri_Kaldi', title: '29_Muslimanlar_Nicin_Geri_Kaldi', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/2_Kisim/29_Muslimanlar_Nicin_Geri_Kaldi.mp3' },
+					  { id: '30_Islamiyyet_ve_Fen', title: '30_Islamiyyet_ve_Fen', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/2_Kisim/30_Islamiyyet_ve_Fen.mp3' },
+					  { id: '31_Madde_ve_Atom_Uzerinde_Yeni_Bilgiler', title: '31_Madde_ve_Atom_Uzerinde_Yeni_Bilgiler', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/2_Kisim/31_Madde_ve_Atom_Uzerinde_Yeni_Bilgiler.mp3' },
+					  { id: '32__Atom_Kuvveti_ve_Sulh_Zemaninda_Bundan_Faidelenme', title: '32__Atom_Kuvveti_ve_Sulh_Zemaninda_Bundan_Faidelenme', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/2_Kisim/32__Atom_Kuvveti_ve_Sulh_Zemaninda_Bundan_Faidelenme.mp3' },
+					  { id: '33_Atom_Bombasi', title: '33_Atom_Bombasi', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/2_Kisim/33_Atom_Bombasi.mp3' },
+					  { id: '34_Islamiyyetde_Nikah', title: '34_Islamiyyetde_Nikah', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/2_Kisim/34_Islamiyyetde_Nikah.mp3' },
+					  { id: '35_Kafirin_Evlenmesi', title: '35_Kafirin_Evlenmesi', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/2_Kisim/35_Kafirin_Evlenmesi.mp3' },
+					  { id: '36_Islamiyyetde_Talak', title: '36_Islamiyyetde_Talak', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/2_Kisim/36_Islamiyyetde_Talak.mp3' },
+					  { id: '37_Sut_Kardeslik', title: '37_Sut_Kardeslik', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/2_Kisim/37_Sut_Kardeslik.mp3' },
+					  { id: '38_Nafaka_ve_Komsu_Hakki', title: '38_Nafaka_ve_Komsu_Hakki', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/2_Kisim/38_Nafaka_ve_Komsu_Hakki.mp3' },
+					  { id: '39_Islamiyyet_ve_Kadin', title: '39_Islamiyyet_ve_Kadin', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/2_Kisim/39_Islamiyyet_ve_Kadin.mp3' },
+					  { id: '40_Halal_Haram_ve_Subheli_Seyler', title: '40_Halal_Haram_ve_Subheli_Seyler', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/2_Kisim/40_Halal_Haram_ve_Subheli_Seyler.mp3' },
+					  { id: '41_Yimesi_ve_Kullanmasi_Haram_Olan_Seyler', title: '41_Yimesi_ve_Kullanmasi_Haram_Olan_Seyler', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/2_Kisim/41_Yimesi_ve_Kullanmasi_Haram_Olan_Seyler.mp3' },
+					  { id: '42_Serab_ve_Alkollu_Ickiler', title: '42_Serab_ve_Alkollu_Ickiler', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/2_Kisim/42_Serab_ve_Alkollu_Ickiler.mp3' },
+					  { id: '43_Tutun_Gunah_Midir', title: '43_Tutun_Gunah_Midir', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/2_Kisim/43_Tutun_Gunah_Midir.mp3' },
+					  { id: '44_Israf_Faiz_Tutun_Icmek', title: '44_Israf_Faiz_Tutun_Icmek', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/2_Kisim/44_Israf_Faiz_Tutun_Icmek.mp3' },
+					  { id: '45_Yimek_Icmek_Adabi', title: '45_Yimek_Icmek_Adabi', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/2_Kisim/45_Yimek_Icmek_Adabi.mp3' },
+					  { id: '46_Hasta_Yemekleri', title: '46_Hasta_Yemekleri', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/2_Kisim/46_Hasta_Yemekleri.mp3' },
+					  { id: '47_Tevekkul', title: '47_Tevekkul', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/2_Kisim/47_Tevekkul.mp3' },
+					  { id: '48_Levh-il-Mahfuz_ve_Umm-ul-Kitab', title: '48_Levh-il-Mahfuz_ve_Umm-ul-Kitab', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/2_Kisim/48_Levh-il-Mahfuz_ve_Umm-ul-Kitab.mp3' },
+					  { id: '49_Irade-i_Cuziyye', title: '49_Irade-i_Cuziyye', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/2_Kisim/49_Irade-i_Cuziyye.mp3' },
+					  { id: '50_Kaza_ve_Kader', title: '50_Kaza_ve_Kader', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/2_Kisim/50_Kaza_ve_Kader.mp3' },
+					  { id: '51_2.Cild_33.Mektub', title: '51_2.Cild_33.Mektub', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/2_Kisim/51_2.Cild_33.Mektub.mp3' },
+					  { id: '52_Teganni_ve_Muzik', title: '52_Teganni_ve_Muzik', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/2_Kisim/52_Teganni_ve_Muzik.mp3' },
+					  { id: '53_Cin_Hakkinda_Bilgi', title: '53_Cin_Hakkinda_Bilgi', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/2_Kisim/53_Cin_Hakkinda_Bilgi.mp3' },
+					  { id: '54_Ruhlarin_Hazir_Olmasi_Hakkinda_Mektub', title: '54_Ruhlarin_Hazir_Olmasi_Hakkinda_Mektub', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/2_Kisim/54_Ruhlarin_Hazir_Olmasi_Hakkinda_Mektub.mp3' },
+					  { id: '55_2.Cild_38.Mektub', title: '55_2.Cild_38.Mektub', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/2_Kisim/55_2.Cild_38.Mektub.mp3' },
+					  { id: '56_2.Cild_28.Mektub', title: '56_2.Cild_28.Mektub', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/2_Kisim/56_2.Cild_28.Mektub.mp3' },
+					  { id: '57_2.Cild_62.Mektub', title: '57_2.Cild_62.Mektub', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/2_Kisim/57_2.Cild_62.Mektub.mp3' },
+					  { id: '58_2.Cild_25.Mektub', title: '58_2.Cild_25.Mektub', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/2_Kisim/58_2.Cild_25.Mektub.mp3' },
+					  { id: '59_Mucize_Keramet_Firaset_ve_Sihr', title: '59_Mucize_Keramet_Firaset_ve_Sihr', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/2_Kisim/59_Mucize_Keramet_Firaset_ve_Sihr.mp3' },
+					  { id: '60_3.Cild_86.Mektub', title: '60_3.Cild_86.Mektub', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/2_Kisim/60_3.Cild_86.Mektub.mp3' },
+					  { id: '61_2.Cild_92.Mektub', title: '61_2.Cild_92.Mektub', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/2_Kisim/61_2.Cild_92.Mektub.mp3' },
+					  { id: '62_2.Cild_8.Mektub', title: '62_2.Cild_8.Mektub', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/2_Kisim/62_2.Cild_8.Mektub.mp3' },
+					  { id: '63_2.Cild_13.Mektub', title: '63_2.Cild_13.Mektub', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/2_Kisim/63_2.Cild_13.Mektub.mp3' },
+					  { id: '64_3.Cild_62.Mektub', title: '64_3.Cild_62.Mektub', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/2_Kisim/64_3.Cild_62.Mektub.mp3' },
+					  { id: '65_3.Cild_98.Mektub', title: '65_3.Cild_98.Mektub', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/2_Kisim/65_3.Cild_98.Mektub.mp3' },
+					  { id: '66_2.Cild_34.Mektub', title: '66_2.Cild_34.Mektub', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/2_Kisim/66_2.Cild_34.Mektub.mp3' },
+					  { id: '67_3.Cild_44.Mektub', title: '67_3.Cild_44.Mektub', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/2_Kisim/67_3.Cild_44.Mektub.mp3' },
+					  { id: '68_3.Cild_39.Mektub', title: '68_3.Cild_39.Mektub', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/2_Kisim/68_3.Cild_39.Mektub.mp3' },
+					  { id: '69_3.Cild_50.Mektub', title: '69_3.Cild_50.Mektub', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/2_Kisim/69_3.Cild_50.Mektub.mp3' },
+					  { id: '70_2.Cild_59.Mektub', title: '70_2.Cild_59.Mektub', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/2_Kisim/70_2.Cild_59.Mektub.mp3' },
+					  { id: '71_61.Mektub', title: '71_61.Mektub', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/2_Kisim/71_61.Mektub.mp3' },
+					  { id: '72_85.Mektub', title: '72_85.Mektub', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/2_Kisim/72_85.Mektub.mp3' },
+					  { id: '73_88.Mektub', title: '73_88.Mektub', audio: 'https://www.hakikatkitabevi.com/turkce/Kitaplar/Tam_Ilmihal/2_Kisim/73_88.Mektub.mp3' },
                 ],
             },
             {
@@ -346,19 +423,329 @@
                 title: 'Mektubat Tercemesi',
                 imageUrl: 'https://www.hakikatkitabevi.net/images/books/B002.png',
                 topics: [
-                    { id: 'mektubat-248', title: '248. Mektub', audio: '8-mektubat/248_Mektub.mp3'},
-                    { id: 'mektubat-249', title: '249. Mektub', audio: '8-mektubat/249_Mektub.mp3'},
-                    { id: 'mektubat-250', title: '250. Mektub', audio: '8-mektubat/250_Mektub.mp3'},
-                    { id: 'mektubat-251', title: '251. Mektub', audio: '8-mektubat/251_Mektub.mp3'},
-                    { id: 'mektubat-252', title: '252. Mektub', audio: '8-mektubat/252_Mektub.mp3'},
-                    { id: 'mektubat-253', title: '253. Mektub', audio: '8-mektubat/253_Mektub.mp3'},
-                    { id: 'mektubat-254', title: '254. Mektub', audio: '8-mektubat/254_Mektub.mp3'},
-                    { id: 'mektubat-255', title: '255. Mektub', audio: '8-mektubat/255_Mektub.mp3'},
-                    { id: 'mektubat-256', title: '256. Mektub', audio: '8-mektubat/256_Mektub.mp3'},
-                    { id: 'mektubat-257', title: '257. Mektub', audio: '8-mektubat/257_Mektub.mp3'},
-                    { id: 'mektubat-258', title: '258. Mektub', audio: '8-mektubat/258_Mektub.mp3'},
-                    { id: 'mektubat-259', title: '259. Mektub', audio: '8-mektubat/259_Mektub.mp3'},
-                    { id: 'mektubat-260', title: '260. Mektub', audio: '8-mektubat/260_Mektub.mp3'}
+                    { id: '000 A Ön Kapak İçi', title: '000 A Ön Kapak İçi', audio: 'Mektubat_Tercemesi/000 A Ön Kapak İçi.mp3' },
+			  { id: '000_B_Giriş Sayfası', title: '000_B_Giriş Sayfası', audio: 'Mektubat_Tercemesi/000_B_Giriş Sayfası.mp3' },
+			  { id: '000_C_Tenbih', title: '000_C_Tenbih', audio: 'Mektubat_Tercemesi/000_C_Tenbih.mp3' },
+			  { id: '000_D_Onsoz', title: '000_D_Onsoz', audio: 'Mektubat_Tercemesi/000_D_Onsoz.mp3' },
+			  { id: '000_E_Birinci_Cild', title: '000_E_Birinci_Cild', audio: 'Mektubat_Tercemesi/000_E_Birinci_Cild.mp3' },
+			  { id: '001_Mektub', title: '001_Mektub', audio: 'Mektubat_Tercemesi/001_Mektub.mp3' },
+			  { id: '002_Mektub', title: '002_Mektub', audio: 'Mektubat_Tercemesi/002_Mektub.mp3' },
+			  { id: '003_Mektub', title: '003_Mektub', audio: 'Mektubat_Tercemesi/003_Mektub.mp3' },
+			  { id: '004_Mektub', title: '004_Mektub', audio: 'Mektubat_Tercemesi/004_Mektub.mp3' },
+			  { id: '005_Mektub', title: '005_Mektub', audio: 'Mektubat_Tercemesi/005_Mektub.mp3' },
+			  { id: '006_Mektub', title: '006_Mektub', audio: 'Mektubat_Tercemesi/006_Mektub.mp3' },
+			  { id: '007_Mektub', title: '007_Mektub', audio: 'Mektubat_Tercemesi/007_Mektub.mp3' },
+			  { id: '008_Mektub', title: '008_Mektub', audio: 'Mektubat_Tercemesi/008_Mektub.mp3' },
+			  { id: '009_Mektub', title: '009_Mektub', audio: 'Mektubat_Tercemesi/009_Mektub.mp3' },
+			  { id: '010_Mektub', title: '010_Mektub', audio: 'Mektubat_Tercemesi/010_Mektub.mp3' },
+			  { id: '011_Mektub', title: '011_Mektub', audio: 'Mektubat_Tercemesi/011_Mektub.mp3' },
+			  { id: '012_Mektub', title: '012_Mektub', audio: 'Mektubat_Tercemesi/012_Mektub.mp3' },
+			  { id: '013_Mektub', title: '013_Mektub', audio: 'Mektubat_Tercemesi/013_Mektub.mp3' },
+			  { id: '014_Mektub', title: '014_Mektub', audio: 'Mektubat_Tercemesi/014_Mektub.mp3' },
+			  { id: '015_Mektub', title: '015_Mektub', audio: 'Mektubat_Tercemesi/015_Mektub.mp3' },
+			  { id: '016_Mektub', title: '016_Mektub', audio: 'Mektubat_Tercemesi/016_Mektub.mp3' },
+			  { id: '017_Mektub', title: '017_Mektub', audio: 'Mektubat_Tercemesi/017_Mektub.mp3' },
+			  { id: '018_Mektub', title: '018_Mektub', audio: 'Mektubat_Tercemesi/018_Mektub.mp3' },
+			  { id: '019_Mektub', title: '019_Mektub', audio: 'Mektubat_Tercemesi/019_Mektub.mp3' },
+			  { id: '020_Mektub', title: '020_Mektub', audio: 'Mektubat_Tercemesi/020_Mektub.mp3' },
+			  { id: '021_Mektub', title: '021_Mektub', audio: 'Mektubat_Tercemesi/021_Mektub.mp3' },
+			  { id: '022_Mektub', title: '022_Mektub', audio: 'Mektubat_Tercemesi/022_Mektub.mp3' },
+			  { id: '023_Mektub', title: '023_Mektub', audio: 'Mektubat_Tercemesi/023_Mektub.mp3' },
+			  { id: '024_Mektub', title: '024_Mektub', audio: 'Mektubat_Tercemesi/024_Mektub.mp3' },
+			  { id: '025_Mektub', title: '025_Mektub', audio: 'Mektubat_Tercemesi/025_Mektub.mp3' },
+			  { id: '026_Mektub', title: '026_Mektub', audio: 'Mektubat_Tercemesi/026_Mektub.mp3' },
+			  { id: '027_Mektub', title: '027_Mektub', audio: 'Mektubat_Tercemesi/027_Mektub.mp3' },
+			  { id: '028_Mektub', title: '028_Mektub', audio: 'Mektubat_Tercemesi/028_Mektub.mp3' },
+			  { id: '029_Mektub', title: '029_Mektub', audio: 'Mektubat_Tercemesi/029_Mektub.mp3' },
+			  { id: '030_Mektub', title: '030_Mektub', audio: 'Mektubat_Tercemesi/030_Mektub.mp3' },
+			  { id: '031_Mektub', title: '031_Mektub', audio: 'Mektubat_Tercemesi/031_Mektub.mp3' },
+			  { id: '032_Mektub', title: '032_Mektub', audio: 'Mektubat_Tercemesi/032_Mektub.mp3' },
+			  { id: '033_Mektub', title: '033_Mektub', audio: 'Mektubat_Tercemesi/033_Mektub.mp3' },
+			  { id: '034_Mektub', title: '034_Mektub', audio: 'Mektubat_Tercemesi/034_Mektub.mp3' },
+			  { id: '035_Mektub', title: '035_Mektub', audio: 'Mektubat_Tercemesi/035_Mektub.mp3' },
+			  { id: '036_Mektub', title: '036_Mektub', audio: 'Mektubat_Tercemesi/036_Mektub.mp3' },
+			  { id: '037_Mektub', title: '037_Mektub', audio: 'Mektubat_Tercemesi/037_Mektub.mp3' },
+			  { id: '038_Mektub', title: '038_Mektub', audio: 'Mektubat_Tercemesi/038_Mektub.mp3' },
+			  { id: '039_Mektub', title: '039_Mektub', audio: 'Mektubat_Tercemesi/039_Mektub.mp3' },
+			  { id: '040_Mektub', title: '040_Mektub', audio: 'Mektubat_Tercemesi/040_Mektub.mp3' },
+			  { id: '041_Mektub', title: '041_Mektub', audio: 'Mektubat_Tercemesi/041_Mektub.mp3' },
+			  { id: '042_Mektub', title: '042_Mektub', audio: 'Mektubat_Tercemesi/042_Mektub.mp3' },
+			  { id: '043_Mektub', title: '043_Mektub', audio: 'Mektubat_Tercemesi/043_Mektub.mp3' },
+			  { id: '044_Mektub', title: '044_Mektub', audio: 'Mektubat_Tercemesi/044_Mektub.mp3' },
+			  { id: '045_Mektub', title: '045_Mektub', audio: 'Mektubat_Tercemesi/045_Mektub.mp3' },
+			  { id: '046_Mektub', title: '046_Mektub', audio: 'Mektubat_Tercemesi/046_Mektub.mp3' },
+			  { id: '047_Mektub', title: '047_Mektub', audio: 'Mektubat_Tercemesi/047_Mektub.mp3' },
+			  { id: '048_Mektub', title: '048_Mektub', audio: 'Mektubat_Tercemesi/048_Mektub.mp3' },
+			  { id: '049_Mektub', title: '049_Mektub', audio: 'Mektubat_Tercemesi/049_Mektub.mp3' },
+			  { id: '050_Mektub', title: '050_Mektub', audio: 'Mektubat_Tercemesi/050_Mektub.mp3' },
+			  { id: '051_Mektub', title: '051_Mektub', audio: 'Mektubat_Tercemesi/051_Mektub.mp3' },
+			  { id: '052_Mektub', title: '052_Mektub', audio: 'Mektubat_Tercemesi/052_Mektub.mp3' },
+			  { id: '053_Mektub', title: '053_Mektub', audio: 'Mektubat_Tercemesi/053_Mektub.mp3' },
+			  { id: '054_Mektub', title: '054_Mektub', audio: 'Mektubat_Tercemesi/054_Mektub.mp3' },
+			  { id: '055_Mektub', title: '055_Mektub', audio: 'Mektubat_Tercemesi/055_Mektub.mp3' },
+			  { id: '056_Mektub', title: '056_Mektub', audio: 'Mektubat_Tercemesi/056_Mektub.mp3' },
+			  { id: '057_Mektub', title: '057_Mektub', audio: 'Mektubat_Tercemesi/057_Mektub.mp3' },
+			  { id: '058_Mektub', title: '058_Mektub', audio: 'Mektubat_Tercemesi/058_Mektub.mp3' },
+			  { id: '059_Mektub', title: '059_Mektub', audio: 'Mektubat_Tercemesi/059_Mektub.mp3' },
+			  { id: '060_Mektub', title: '060_Mektub', audio: 'Mektubat_Tercemesi/060_Mektub.mp3' },
+			  { id: '061_Mektub', title: '061_Mektub', audio: 'Mektubat_Tercemesi/061_Mektub.mp3' },
+			  { id: '062_Mektub', title: '062_Mektub', audio: 'Mektubat_Tercemesi/062_Mektub.mp3' },
+			  { id: '063_Mektub', title: '063_Mektub', audio: 'Mektubat_Tercemesi/063_Mektub.mp3' },
+			  { id: '064_Mektub', title: '064_Mektub', audio: 'Mektubat_Tercemesi/064_Mektub.mp3' },
+			  { id: '065_Mektub', title: '065_Mektub', audio: 'Mektubat_Tercemesi/065_Mektub.mp3' },
+			  { id: '066_Mektub', title: '066_Mektub', audio: 'Mektubat_Tercemesi/066_Mektub.mp3' },
+			  { id: '067_Mektub', title: '067_Mektub', audio: 'Mektubat_Tercemesi/067_Mektub.mp3' },
+			  { id: '068_Mektub', title: '068_Mektub', audio: 'Mektubat_Tercemesi/068_Mektub.mp3' },
+			  { id: '069_Mektub', title: '069_Mektub', audio: 'Mektubat_Tercemesi/069_Mektub.mp3' },
+			  { id: '070_Mektub', title: '070_Mektub', audio: 'Mektubat_Tercemesi/070_Mektub.mp3' },
+			  { id: '071_Mektub', title: '071_Mektub', audio: 'Mektubat_Tercemesi/071_Mektub.mp3' },
+			  { id: '072_Mektub', title: '072_Mektub', audio: 'Mektubat_Tercemesi/072_Mektub.mp3' },
+			  { id: '073_Mektub', title: '073_Mektub', audio: 'Mektubat_Tercemesi/073_Mektub.mp3' },
+			  { id: '074_Mektub', title: '074_Mektub', audio: 'Mektubat_Tercemesi/074_Mektub.mp3' },
+			  { id: '075_Mektub', title: '075_Mektub', audio: 'Mektubat_Tercemesi/075_Mektub.mp3' },
+			  { id: '076_Mektub', title: '076_Mektub', audio: 'Mektubat_Tercemesi/076_Mektub.mp3' },
+			  { id: '077_Mektub', title: '077_Mektub', audio: 'Mektubat_Tercemesi/077_Mektub.mp3' },
+			  { id: '078_Mektub', title: '078_Mektub', audio: 'Mektubat_Tercemesi/078_Mektub.mp3' },
+			  { id: '079_Mektub', title: '079_Mektub', audio: 'Mektubat_Tercemesi/079_Mektub.mp3' },
+			  { id: '080_Mektub', title: '080_Mektub', audio: 'Mektubat_Tercemesi/080_Mektub.mp3' },
+			  { id: '081_Mektub', title: '081_Mektub', audio: 'Mektubat_Tercemesi/081_Mektub.mp3' },
+			  { id: '082_Mektub', title: '082_Mektub', audio: 'Mektubat_Tercemesi/082_Mektub.mp3' },
+			  { id: '083_Mektub', title: '083_Mektub', audio: 'Mektubat_Tercemesi/083_Mektub.mp3' },
+			  { id: '084_Mektub', title: '084_Mektub', audio: 'Mektubat_Tercemesi/084_Mektub.mp3' },
+			  { id: '085_Mektub', title: '085_Mektub', audio: 'Mektubat_Tercemesi/085_Mektub.mp3' },
+			  { id: '086_Mektub', title: '086_Mektub', audio: 'Mektubat_Tercemesi/086_Mektub.mp3' },
+			  { id: '087_Mektub', title: '087_Mektub', audio: 'Mektubat_Tercemesi/087_Mektub.mp3' },
+			  { id: '088_Mektub', title: '088_Mektub', audio: 'Mektubat_Tercemesi/088_Mektub.mp3' },
+			  { id: '089_Mektub', title: '089_Mektub', audio: 'Mektubat_Tercemesi/089_Mektub.mp3' },
+			  { id: '090_Mektub', title: '090_Mektub', audio: 'Mektubat_Tercemesi/090_Mektub.mp3' },
+			  { id: '091_Mektub', title: '091_Mektub', audio: 'Mektubat_Tercemesi/091_Mektub.mp3' },
+			  { id: '092_Mektub', title: '092_Mektub', audio: 'Mektubat_Tercemesi/092_Mektub.mp3' },
+			  { id: '093_Mektub', title: '093_Mektub', audio: 'Mektubat_Tercemesi/093_Mektub.mp3' },
+			  { id: '094_Mektub', title: '094_Mektub', audio: 'Mektubat_Tercemesi/094_Mektub.mp3' },
+			  { id: '095_Mektub', title: '095_Mektub', audio: 'Mektubat_Tercemesi/095_Mektub.mp3' },
+			  { id: '096_Mektub', title: '096_Mektub', audio: 'Mektubat_Tercemesi/096_Mektub.mp3' },
+			  { id: '097_Mektub', title: '097_Mektub', audio: 'Mektubat_Tercemesi/097_Mektub.mp3' },
+			  { id: '098_Mektub', title: '098_Mektub', audio: 'Mektubat_Tercemesi/098_Mektub.mp3' },
+			  { id: '099_Mektub', title: '099_Mektub', audio: 'Mektubat_Tercemesi/099_Mektub.mp3' },
+			  { id: '100_Mektub', title: '100_Mektub', audio: 'Mektubat_Tercemesi/100_Mektub.mp3' },
+			  { id: '101_Mektub', title: '101_Mektub', audio: 'Mektubat_Tercemesi/101_Mektub.mp3' },
+			  { id: '102_Mektub', title: '102_Mektub', audio: 'Mektubat_Tercemesi/102_Mektub.mp3' },
+			  { id: '103_Mektub', title: '103_Mektub', audio: 'Mektubat_Tercemesi/103_Mektub.mp3' },
+			  { id: '104_Mektub', title: '104_Mektub', audio: 'Mektubat_Tercemesi/104_Mektub.mp3' },
+			  { id: '105_Mektub', title: '105_Mektub', audio: 'Mektubat_Tercemesi/105_Mektub.mp3' },
+			  { id: '106_Mektub', title: '106_Mektub', audio: 'Mektubat_Tercemesi/106_Mektub.mp3' },
+			  { id: '107_Mektub', title: '107_Mektub', audio: 'Mektubat_Tercemesi/107_Mektub.mp3' },
+			  { id: '108_Mektub', title: '108_Mektub', audio: 'Mektubat_Tercemesi/108_Mektub.mp3' },
+			  { id: '109_Mektub', title: '109_Mektub', audio: 'Mektubat_Tercemesi/109_Mektub.mp3' },
+			  { id: '110_Mektub', title: '110_Mektub', audio: 'Mektubat_Tercemesi/110_Mektub.mp3' },
+			  { id: '111_Mektub', title: '111_Mektub', audio: 'Mektubat_Tercemesi/111_Mektub.mp3' },
+			  { id: '112_Mektub', title: '112_Mektub', audio: 'Mektubat_Tercemesi/112_Mektub.mp3' },
+			  { id: '113_Mektub', title: '113_Mektub', audio: 'Mektubat_Tercemesi/113_Mektub.mp3' },
+			  { id: '114_Mektub', title: '114_Mektub', audio: 'Mektubat_Tercemesi/114_Mektub.mp3' },
+			  { id: '115_Mektub', title: '115_Mektub', audio: 'Mektubat_Tercemesi/115_Mektub.mp3' },
+			  { id: '116_Mektub', title: '116_Mektub', audio: 'Mektubat_Tercemesi/116_Mektub.mp3' },
+			  { id: '117_Mektub', title: '117_Mektub', audio: 'Mektubat_Tercemesi/117_Mektub.mp3' },
+			  { id: '118_Mektub', title: '118_Mektub', audio: 'Mektubat_Tercemesi/118_Mektub.mp3' },
+			  { id: '119_Mektub', title: '119_Mektub', audio: 'Mektubat_Tercemesi/119_Mektub.mp3' },
+			  { id: '120_Mektub', title: '120_Mektub', audio: 'Mektubat_Tercemesi/120_Mektub.mp3' },
+			  { id: '121_Mektub', title: '121_Mektub', audio: 'Mektubat_Tercemesi/121_Mektub.mp3' },
+			  { id: '122_Mektub', title: '122_Mektub', audio: 'Mektubat_Tercemesi/122_Mektub.mp3' },
+			  { id: '123_Mektub', title: '123_Mektub', audio: 'Mektubat_Tercemesi/123_Mektub.mp3' },
+			  { id: '124_Mektub', title: '124_Mektub', audio: 'Mektubat_Tercemesi/124_Mektub.mp3' },
+			  { id: '125_Mektub', title: '125_Mektub', audio: 'Mektubat_Tercemesi/125_Mektub.mp3' },
+			  { id: '126_Mektub', title: '126_Mektub', audio: 'Mektubat_Tercemesi/126_Mektub.mp3' },
+			  { id: '127_Mektub', title: '127_Mektub', audio: 'Mektubat_Tercemesi/127_Mektub.mp3' },
+			  { id: '128_Mektub', title: '128_Mektub', audio: 'Mektubat_Tercemesi/128_Mektub.mp3' },
+			  { id: '129_Mektub', title: '129_Mektub', audio: 'Mektubat_Tercemesi/129_Mektub.mp3' },
+			  { id: '130_Mektub', title: '130_Mektub', audio: 'Mektubat_Tercemesi/130_Mektub.mp3' },
+			  { id: '131_Mektub', title: '131_Mektub', audio: 'Mektubat_Tercemesi/131_Mektub.mp3' },
+			  { id: '132_Mektub', title: '132_Mektub', audio: 'Mektubat_Tercemesi/132_Mektub.mp3' },
+			  { id: '133_Mektub', title: '133_Mektub', audio: 'Mektubat_Tercemesi/133_Mektub.mp3' },
+			  { id: '134_Mektub', title: '134_Mektub', audio: 'Mektubat_Tercemesi/134_Mektub.mp3' },
+			  { id: '135_Mektub', title: '135_Mektub', audio: 'Mektubat_Tercemesi/135_Mektub.mp3' },
+			  { id: '136_Mektub', title: '136_Mektub', audio: 'Mektubat_Tercemesi/136_Mektub.mp3' },
+			  { id: '137_Mektub', title: '137_Mektub', audio: 'Mektubat_Tercemesi/137_Mektub.mp3' },
+			  { id: '138_Mektub', title: '138_Mektub', audio: 'Mektubat_Tercemesi/138_Mektub.mp3' },
+			  { id: '139_Mektub', title: '139_Mektub', audio: 'Mektubat_Tercemesi/139_Mektub.mp3' },
+			  { id: '140_Mektub', title: '140_Mektub', audio: 'Mektubat_Tercemesi/140_Mektub.mp3' },
+			  { id: '141_Mektub', title: '141_Mektub', audio: 'Mektubat_Tercemesi/141_Mektub.mp3' },
+			  { id: '142_Mektub', title: '142_Mektub', audio: 'Mektubat_Tercemesi/142_Mektub.mp3' },
+			  { id: '143_Mektub', title: '143_Mektub', audio: 'Mektubat_Tercemesi/143_Mektub.mp3' },
+			  { id: '144_Mektub', title: '144_Mektub', audio: 'Mektubat_Tercemesi/144_Mektub.mp3' },
+			  { id: '145_Mektub', title: '145_Mektub', audio: 'Mektubat_Tercemesi/145_Mektub.mp3' },
+			  { id: '146_Mektub', title: '146_Mektub', audio: 'Mektubat_Tercemesi/146_Mektub.mp3' },
+			  { id: '147_Mektub', title: '147_Mektub', audio: 'Mektubat_Tercemesi/147_Mektub.mp3' },
+			  { id: '148_Mektub', title: '148_Mektub', audio: 'Mektubat_Tercemesi/148_Mektub.mp3' },
+			  { id: '149_Mektub', title: '149_Mektub', audio: 'Mektubat_Tercemesi/149_Mektub.mp3' },
+			  { id: '150_Mektub', title: '150_Mektub', audio: 'Mektubat_Tercemesi/150_Mektub.mp3' },
+			  { id: '151_Mektub', title: '151_Mektub', audio: 'Mektubat_Tercemesi/151_Mektub.mp3' },
+			  { id: '152_Mektub', title: '152_Mektub', audio: 'Mektubat_Tercemesi/152_Mektub.mp3' },
+			  { id: '153_Mektub', title: '153_Mektub', audio: 'Mektubat_Tercemesi/153_Mektub.mp3' },
+			  { id: '154_Mektub', title: '154_Mektub', audio: 'Mektubat_Tercemesi/154_Mektub.mp3' },
+			  { id: '155_Mektub', title: '155_Mektub', audio: 'Mektubat_Tercemesi/155_Mektub.mp3' },
+			  { id: '156_Mektub', title: '156_Mektub', audio: 'Mektubat_Tercemesi/156_Mektub.mp3' },
+			  { id: '157_Mektub', title: '157_Mektub', audio: 'Mektubat_Tercemesi/157_Mektub.mp3' },
+			  { id: '158_Mektub', title: '158_Mektub', audio: 'Mektubat_Tercemesi/158_Mektub.mp3' },
+			  { id: '159_Mektub', title: '159_Mektub', audio: 'Mektubat_Tercemesi/159_Mektub.mp3' },
+			  { id: '160_Mektub', title: '160_Mektub', audio: 'Mektubat_Tercemesi/160_Mektub.mp3' },
+			  { id: '161_Mektub', title: '161_Mektub', audio: 'Mektubat_Tercemesi/161_Mektub.mp3' },
+			  { id: '162_Mektub', title: '162_Mektub', audio: 'Mektubat_Tercemesi/162_Mektub.mp3' },
+			  { id: '163_Mektub', title: '163_Mektub', audio: 'Mektubat_Tercemesi/163_Mektub.mp3' },
+			  { id: '164_Mektub', title: '164_Mektub', audio: 'Mektubat_Tercemesi/164_Mektub.mp3' },
+			  { id: '165_Mektub', title: '165_Mektub', audio: 'Mektubat_Tercemesi/165_Mektub.mp3' },
+			  { id: '166_Mektub', title: '166_Mektub', audio: 'Mektubat_Tercemesi/166_Mektub.mp3' },
+			  { id: '167_Mektub', title: '167_Mektub', audio: 'Mektubat_Tercemesi/167_Mektub.mp3' },
+			  { id: '168_Mektub', title: '168_Mektub', audio: 'Mektubat_Tercemesi/168_Mektub.mp3' },
+			  { id: '169_Mektub', title: '169_Mektub', audio: 'Mektubat_Tercemesi/169_Mektub.mp3' },
+			  { id: '170_Mektub', title: '170_Mektub', audio: 'Mektubat_Tercemesi/170_Mektub.mp3' },
+			  { id: '171_Mektub', title: '171_Mektub', audio: 'Mektubat_Tercemesi/171_Mektub.mp3' },
+			  { id: '172_Mektub', title: '172_Mektub', audio: 'Mektubat_Tercemesi/172_Mektub.mp3' },
+			  { id: '173_Mektub', title: '173_Mektub', audio: 'Mektubat_Tercemesi/173_Mektub.mp3' },
+			  { id: '174_Mektub', title: '174_Mektub', audio: 'Mektubat_Tercemesi/174_Mektub.mp3' },
+			  { id: '175_Mektub', title: '175_Mektub', audio: 'Mektubat_Tercemesi/175_Mektub.mp3' },
+			  { id: '176_Mektub', title: '176_Mektub', audio: 'Mektubat_Tercemesi/176_Mektub.mp3' },
+			  { id: '177_Mektub', title: '177_Mektub', audio: 'Mektubat_Tercemesi/177_Mektub.mp3' },
+			  { id: '178_Mektub', title: '178_Mektub', audio: 'Mektubat_Tercemesi/178_Mektub.mp3' },
+			  { id: '179_Mektub', title: '179_Mektub', audio: 'Mektubat_Tercemesi/179_Mektub.mp3' },
+			  { id: '180_Mektub', title: '180_Mektub', audio: 'Mektubat_Tercemesi/180_Mektub.mp3' },
+			  { id: '181_Mektub', title: '181_Mektub', audio: 'Mektubat_Tercemesi/181_Mektub.mp3' },
+			  { id: '182_Mektub', title: '182_Mektub', audio: 'Mektubat_Tercemesi/182_Mektub.mp3' },
+			  { id: '183_Mektub', title: '183_Mektub', audio: 'Mektubat_Tercemesi/183_Mektub.mp3' },
+			  { id: '184_Mektub', title: '184_Mektub', audio: 'Mektubat_Tercemesi/184_Mektub.mp3' },
+			  { id: '185_Mektub', title: '185_Mektub', audio: 'Mektubat_Tercemesi/185_Mektub.mp3' },
+			  { id: '186_Mektub', title: '186_Mektub', audio: 'Mektubat_Tercemesi/186_Mektub.mp3' },
+			  { id: '187_Mektub', title: '187_Mektub', audio: 'Mektubat_Tercemesi/187_Mektub.mp3' },
+			  { id: '188_Mektub', title: '188_Mektub', audio: 'Mektubat_Tercemesi/188_Mektub.mp3' },
+			  { id: '189_Mektub', title: '189_Mektub', audio: 'Mektubat_Tercemesi/189_Mektub.mp3' },
+			  { id: '190_Mektub', title: '190_Mektub', audio: 'Mektubat_Tercemesi/190_Mektub.mp3' },
+			  { id: '191_Mektub', title: '191_Mektub', audio: 'Mektubat_Tercemesi/191_Mektub.mp3' },
+			  { id: '192_Mektub', title: '192_Mektub', audio: 'Mektubat_Tercemesi/192_Mektub.mp3' },
+			  { id: '193_Mektub', title: '193_Mektub', audio: 'Mektubat_Tercemesi/193_Mektub.mp3' },
+			  { id: '194_Mektub', title: '194_Mektub', audio: 'Mektubat_Tercemesi/194_Mektub.mp3' },
+			  { id: '195_Mektub', title: '195_Mektub', audio: 'Mektubat_Tercemesi/195_Mektub.mp3' },
+			  { id: '196_Mektub', title: '196_Mektub', audio: 'Mektubat_Tercemesi/196_Mektub.mp3' },
+			  { id: '197_Mektub', title: '197_Mektub', audio: 'Mektubat_Tercemesi/197_Mektub.mp3' },
+			  { id: '198_Mektub', title: '198_Mektub', audio: 'Mektubat_Tercemesi/198_Mektub.mp3' },
+			  { id: '199_Mektub', title: '199_Mektub', audio: 'Mektubat_Tercemesi/199_Mektub.mp3' },
+			  { id: '200_Mektub', title: '200_Mektub', audio: 'Mektubat_Tercemesi/200_Mektub.mp3' },
+			  { id: '201_Mektub', title: '201_Mektub', audio: 'Mektubat_Tercemesi/201_Mektub.mp3' },
+			  { id: '202_Mektub', title: '202_Mektub', audio: 'Mektubat_Tercemesi/202_Mektub.mp3' },
+			  { id: '203_Mektub', title: '203_Mektub', audio: 'Mektubat_Tercemesi/203_Mektub.mp3' },
+			  { id: '204_Mektub', title: '204_Mektub', audio: 'Mektubat_Tercemesi/204_Mektub.mp3' },
+			  { id: '205_Mektub', title: '205_Mektub', audio: 'Mektubat_Tercemesi/205_Mektub.mp3' },
+			  { id: '206_Mektub', title: '206_Mektub', audio: 'Mektubat_Tercemesi/206_Mektub.mp3' },
+			  { id: '207_Mektub', title: '207_Mektub', audio: 'Mektubat_Tercemesi/207_Mektub.mp3' },
+			  { id: '208_Mektub', title: '208_Mektub', audio: 'Mektubat_Tercemesi/208_Mektub.mp3' },
+			  { id: '209_Mektub', title: '209_Mektub', audio: 'Mektubat_Tercemesi/209_Mektub.mp3' },
+			  { id: '210_Mektub', title: '210_Mektub', audio: 'Mektubat_Tercemesi/210_Mektub.mp3' },
+			  { id: '211_Mektub', title: '211_Mektub', audio: 'Mektubat_Tercemesi/211_Mektub.mp3' },
+			  { id: '212_Mektub', title: '212_Mektub', audio: 'Mektubat_Tercemesi/212_Mektub.mp3' },
+			  { id: '213_Mektub', title: '213_Mektub', audio: 'Mektubat_Tercemesi/213_Mektub.mp3' },
+			  { id: '214_Mektub', title: '214_Mektub', audio: 'Mektubat_Tercemesi/214_Mektub.mp3' },
+			  { id: '215_Mektub', title: '215_Mektub', audio: 'Mektubat_Tercemesi/215_Mektub.mp3' },
+			  { id: '216_Mektub', title: '216_Mektub', audio: 'Mektubat_Tercemesi/216_Mektub.mp3' },
+			  { id: '217_Mektub', title: '217_Mektub', audio: 'Mektubat_Tercemesi/217_Mektub.mp3' },
+			  { id: '218_Mektub', title: '218_Mektub', audio: 'Mektubat_Tercemesi/218_Mektub.mp3' },
+			  { id: '219_Mektub', title: '219_Mektub', audio: 'Mektubat_Tercemesi/219_Mektub.mp3' },
+			  { id: '220_Mektub', title: '220_Mektub', audio: 'Mektubat_Tercemesi/220_Mektub.mp3' },
+			  { id: '221_Mektub', title: '221_Mektub', audio: 'Mektubat_Tercemesi/221_Mektub.mp3' },
+			  { id: '222_Mektub', title: '222_Mektub', audio: 'Mektubat_Tercemesi/222_Mektub.mp3' },
+			  { id: '223_Mektub', title: '223_Mektub', audio: 'Mektubat_Tercemesi/223_Mektub.mp3' },
+			  { id: '224_Mektub', title: '224_Mektub', audio: 'Mektubat_Tercemesi/224_Mektub.mp3' },
+			  { id: '225_Mektub', title: '225_Mektub', audio: 'Mektubat_Tercemesi/225_Mektub.mp3' },
+			  { id: '226_Mektub', title: '226_Mektub', audio: 'Mektubat_Tercemesi/226_Mektub.mp3' },
+			  { id: '227_Mektub', title: '227_Mektub', audio: 'Mektubat_Tercemesi/227_Mektub.mp3' },
+			  { id: '228_Mektub', title: '228_Mektub', audio: 'Mektubat_Tercemesi/228_Mektub.mp3' },
+			  { id: '229_Mektub', title: '229_Mektub', audio: 'Mektubat_Tercemesi/229_Mektub.mp3' },
+			  { id: '230_Mektub', title: '230_Mektub', audio: 'Mektubat_Tercemesi/230_Mektub.mp3' },
+			  { id: '231_Mektub', title: '231_Mektub', audio: 'Mektubat_Tercemesi/231_Mektub.mp3' },
+			  { id: '232_Mektub', title: '232_Mektub', audio: 'Mektubat_Tercemesi/232_Mektub.mp3' },
+			  { id: '233_Mektub', title: '233_Mektub', audio: 'Mektubat_Tercemesi/233_Mektub.mp3' },
+			  { id: '234_Mektub', title: '234_Mektub', audio: 'Mektubat_Tercemesi/234_Mektub.mp3' },
+			  { id: '235_Mektub', title: '235_Mektub', audio: 'Mektubat_Tercemesi/235_Mektub.mp3' },
+			  { id: '236_Mektub', title: '236_Mektub', audio: 'Mektubat_Tercemesi/236_Mektub.mp3' },
+			  { id: '237_Mektub', title: '237_Mektub', audio: 'Mektubat_Tercemesi/237_Mektub.mp3' },
+			  { id: '238_Mektub', title: '238_Mektub', audio: 'Mektubat_Tercemesi/238_Mektub.mp3' },
+			  { id: '239_Mektub', title: '239_Mektub', audio: 'Mektubat_Tercemesi/239_Mektub.mp3' },
+			  { id: '240_Mektub', title: '240_Mektub', audio: 'Mektubat_Tercemesi/240_Mektub.mp3' },
+			  { id: '241_Mektub', title: '241_Mektub', audio: 'Mektubat_Tercemesi/241_Mektub.mp3' },
+			  { id: '242_Mektub', title: '242_Mektub', audio: 'Mektubat_Tercemesi/242_Mektub.mp3' },
+			  { id: '243_Mektub', title: '243_Mektub', audio: 'Mektubat_Tercemesi/243_Mektub.mp3' },
+			  { id: '244_Mektub', title: '244_Mektub', audio: 'Mektubat_Tercemesi/244_Mektub.mp3' },
+			  { id: '245_Mektub', title: '245_Mektub', audio: 'Mektubat_Tercemesi/245_Mektub.mp3' },
+			  { id: '246_Mektub', title: '246_Mektub', audio: 'Mektubat_Tercemesi/246_Mektub.mp3' },
+			  { id: '247_Mektub', title: '247_Mektub', audio: 'Mektubat_Tercemesi/247_Mektub.mp3' },
+			  { id: '248_Mektub', title: '248_Mektub', audio: 'Mektubat_Tercemesi/248_Mektub.mp3' },
+			  { id: '249_Mektub', title: '249_Mektub', audio: 'Mektubat_Tercemesi/249_Mektub.mp3' },
+			  { id: '250_Mektub', title: '250_Mektub', audio: 'Mektubat_Tercemesi/250_Mektub.mp3' },
+			  { id: '251_Mektub', title: '251_Mektub', audio: 'Mektubat_Tercemesi/251_Mektub.mp3' },
+			  { id: '252_Mektub', title: '252_Mektub', audio: 'Mektubat_Tercemesi/252_Mektub.mp3' },
+			  { id: '253_Mektub', title: '253_Mektub', audio: 'Mektubat_Tercemesi/253_Mektub.mp3' },
+			  { id: '254_Mektub', title: '254_Mektub', audio: 'Mektubat_Tercemesi/254_Mektub.mp3' },
+			  { id: '255_Mektub', title: '255_Mektub', audio: 'Mektubat_Tercemesi/255_Mektub.mp3' },
+			  { id: '256_Mektub', title: '256_Mektub', audio: 'Mektubat_Tercemesi/256_Mektub.mp3' },
+			  { id: '257_Mektub', title: '257_Mektub', audio: 'Mektubat_Tercemesi/257_Mektub.mp3' },
+			  { id: '258_Mektub', title: '258_Mektub', audio: 'Mektubat_Tercemesi/258_Mektub.mp3' },
+			  { id: '259_Mektub', title: '259_Mektub', audio: 'Mektubat_Tercemesi/259_Mektub.mp3' },
+			  { id: '260_Mektub', title: '260_Mektub', audio: 'Mektubat_Tercemesi/260_Mektub.mp3' },
+			  { id: '261_Mektub', title: '261_Mektub', audio: 'Mektubat_Tercemesi/261_Mektub.mp3' },
+			  { id: '262_Mektub', title: '262_Mektub', audio: 'Mektubat_Tercemesi/262_Mektub.mp3' },
+			  { id: '263_Mektub', title: '263_Mektub', audio: 'Mektubat_Tercemesi/263_Mektub.mp3' },
+			  { id: '264_Mektub', title: '264_Mektub', audio: 'Mektubat_Tercemesi/264_Mektub.mp3' },
+			  { id: '265_Mektub', title: '265_Mektub', audio: 'Mektubat_Tercemesi/265_Mektub.mp3' },
+			  { id: '266_Mektub', title: '266_Mektub', audio: 'Mektubat_Tercemesi/266_Mektub.mp3' },
+			  { id: '267_Mektub', title: '267_Mektub', audio: 'Mektubat_Tercemesi/267_Mektub.mp3' },
+			  { id: '268_Mektub', title: '268_Mektub', audio: 'Mektubat_Tercemesi/268_Mektub.mp3' },
+			  { id: '269_Mektub', title: '269_Mektub', audio: 'Mektubat_Tercemesi/269_Mektub.mp3' },
+			  { id: '270_Mektub', title: '270_Mektub', audio: 'Mektubat_Tercemesi/270_Mektub.mp3' },
+			  { id: '271_Mektub', title: '271_Mektub', audio: 'Mektubat_Tercemesi/271_Mektub.mp3' },
+			  { id: '272_Mektub', title: '272_Mektub', audio: 'Mektubat_Tercemesi/272_Mektub.mp3' },
+			  { id: '273_Mektub', title: '273_Mektub', audio: 'Mektubat_Tercemesi/273_Mektub.mp3' },
+			  { id: '274_Mektub', title: '274_Mektub', audio: 'Mektubat_Tercemesi/274_Mektub.mp3' },
+			  { id: '275_Mektub', title: '275_Mektub', audio: 'Mektubat_Tercemesi/275_Mektub.mp3' },
+			  { id: '276_Mektub', title: '276_Mektub', audio: 'Mektubat_Tercemesi/276_Mektub.mp3' },
+			  { id: '277_Mektub', title: '277_Mektub', audio: 'Mektubat_Tercemesi/277_Mektub.mp3' },
+			  { id: '278_Mektub', title: '278_Mektub', audio: 'Mektubat_Tercemesi/278_Mektub.mp3' },
+			  { id: '279_Mektub', title: '279_Mektub', audio: 'Mektubat_Tercemesi/279_Mektub.mp3' },
+			  { id: '280_Mektub', title: '280_Mektub', audio: 'Mektubat_Tercemesi/280_Mektub.mp3' },
+			  { id: '281_Mektub', title: '281_Mektub', audio: 'Mektubat_Tercemesi/281_Mektub.mp3' },
+			  { id: '282_Mektub', title: '282_Mektub', audio: 'Mektubat_Tercemesi/282_Mektub.mp3' },
+			  { id: '283_Mektub', title: '283_Mektub', audio: 'Mektubat_Tercemesi/283_Mektub.mp3' },
+			  { id: '284_Mektub', title: '284_Mektub', audio: 'Mektubat_Tercemesi/284_Mektub.mp3' },
+			  { id: '285_Mektub', title: '285_Mektub', audio: 'Mektubat_Tercemesi/285_Mektub.mp3' },
+			  { id: '286_Mektub', title: '286_Mektub', audio: 'Mektubat_Tercemesi/286_Mektub.mp3' },
+			  { id: '287_Mektub', title: '287_Mektub', audio: 'Mektubat_Tercemesi/287_Mektub.mp3' },
+			  { id: '288_Mektub', title: '288_Mektub', audio: 'Mektubat_Tercemesi/288_Mektub.mp3' },
+			  { id: '289_Mektub', title: '289_Mektub', audio: 'Mektubat_Tercemesi/289_Mektub.mp3' },
+			  { id: '290_Mektub', title: '290_Mektub', audio: 'Mektubat_Tercemesi/290_Mektub.mp3' },
+			  { id: '291_Mektub', title: '291_Mektub', audio: 'Mektubat_Tercemesi/291_Mektub.mp3' },
+			  { id: '292_Mektub', title: '292_Mektub', audio: 'Mektubat_Tercemesi/292_Mektub.mp3' },
+			  { id: '293_Mektub', title: '293_Mektub', audio: 'Mektubat_Tercemesi/293_Mektub.mp3' },
+			  { id: '294_Mektub', title: '294_Mektub', audio: 'Mektubat_Tercemesi/294_Mektub.mp3' },
+			  { id: '295_Mektub', title: '295_Mektub', audio: 'Mektubat_Tercemesi/295_Mektub.mp3' },
+			  { id: '296_Mektub', title: '296_Mektub', audio: 'Mektubat_Tercemesi/296_Mektub.mp3' },
+			  { id: '297_Mektub', title: '297_Mektub', audio: 'Mektubat_Tercemesi/297_Mektub.mp3' },
+			  { id: '298_Mektub', title: '298_Mektub', audio: 'Mektubat_Tercemesi/298_Mektub.mp3' },
+			  { id: '299_Mektub', title: '299_Mektub', audio: 'Mektubat_Tercemesi/299_Mektub.mp3' },
+			  { id: '300_Mektub', title: '300_Mektub', audio: 'Mektubat_Tercemesi/300_Mektub.mp3' },
+			  { id: '301_Mektub', title: '301_Mektub', audio: 'Mektubat_Tercemesi/301_Mektub.mp3' },
+			  { id: '302_Mektub', title: '302_Mektub', audio: 'Mektubat_Tercemesi/302_Mektub.mp3' },
+			  { id: '303_Mektub', title: '303_Mektub', audio: 'Mektubat_Tercemesi/303_Mektub.mp3' },
+			  { id: '304_Mektub', title: '304_Mektub', audio: 'Mektubat_Tercemesi/304_Mektub.mp3' },
+			  { id: '305_Mektub', title: '305_Mektub', audio: 'Mektubat_Tercemesi/305_Mektub.mp3' },
+			  { id: '306_Mektub', title: '306_Mektub', audio: 'Mektubat_Tercemesi/306_Mektub.mp3' },
+			  { id: '307_Mektub', title: '307_Mektub', audio: 'Mektubat_Tercemesi/307_Mektub.mp3' },
+			  { id: '308_Mektub', title: '308_Mektub', audio: 'Mektubat_Tercemesi/308_Mektub.mp3' },
+			  { id: '309_Mektub', title: '309_Mektub', audio: 'Mektubat_Tercemesi/309_Mektub.mp3' },
+			  { id: '310_Mektub', title: '310_Mektub', audio: 'Mektubat_Tercemesi/310_Mektub.mp3' },
+			  { id: '311_Mektub', title: '311_Mektub', audio: 'Mektubat_Tercemesi/311_Mektub.mp3' },
+			  { id: '312_Mektub', title: '312_Mektub', audio: 'Mektubat_Tercemesi/312_Mektub.mp3' },
+			  { id: '313_Mektub', title: '313_Mektub', audio: 'Mektubat_Tercemesi/313_Mektub.mp3' },
+			  { id: '314 E Arka Kapak İçi', title: '314 E Arka Kapak İçi', audio: 'Mektubat_Tercemesi/314 E Arka Kapak İçi.mp3' },
+			  { id: '314_A_Birinci_Ariza', title: '314_A_Birinci_Ariza', audio: 'Mektubat_Tercemesi/314_A_Birinci_Ariza.mp3' },
+			  { id: '314_B_Ikinci_Ariza', title: '314_B_Ikinci_Ariza', audio: 'Mektubat_Tercemesi/314_B_Ikinci_Ariza.mp3' },
+			  { id: '314_C_Ucuncu_Ariza', title: '314_C_Ucuncu_Ariza', audio: 'Mektubat_Tercemesi/314_C_Ucuncu_Ariza.mp3' },
+			  { id: '314_D_Son_Sahife', title: '314_D_Son_Sahife', audio: 'Mektubat_Tercemesi/314_D_Son_Sahife.mp3' },
                 ]
             },
             {
@@ -366,7 +753,33 @@
                 title: 'Faideli Bilgiler',
                 imageUrl: 'https://www.hakikatkitabevi.net/images/books/B008.png',
                 topics: [
-                    { id: 'faideli-bilgiler-1', title: 'Konu 1', audio: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-6.mp3' }
+                    { id: '00 Ön Kapak İçi', title: '00 Ön Kapak İçi', audio: 'Faideli_Bilgiler/00 Ön Kapak İçi.mp3' },
+					{ id: '01_Onsoz', title: '01_Onsoz', audio: 'Faideli_Bilgiler/01_Onsoz.mp3' },
+					{ id: '02_Malumat-i_Nafia', title: '02_Malumat-i_Nafia', audio: 'Faideli_Bilgiler/02_Malumat-i_Nafia.mp3' },
+					{ id: '03_Boluculer_ve_Bozuk_Mezhebler', title: '03_Boluculer_ve_Bozuk_Mezhebler', audio: 'Faideli_Bilgiler/03_Boluculer_ve_Bozuk_Mezhebler.mp3' },
+					{ id: '04_Ehl-i_Sunnet_Itikadi', title: '04_Ehl-i_Sunnet_Itikadi', audio: 'Faideli_Bilgiler/04_Ehl-i_Sunnet_Itikadi.mp3' },
+					{ id: '05_Imam-i_Azam_Ebu_Hanife', title: '05_Imam-i_Azam_Ebu_Hanife', audio: 'Faideli_Bilgiler/05_Imam-i_Azam_Ebu_Hanife.mp3' },
+					{ id: '06_Vehhabilik_ve_Ehl-i_Sunnetin_Cevabi', title: '06_Vehhabilik_ve_Ehl-i_Sunnetin_Cevabi', audio: 'Faideli_Bilgiler/06_Vehhabilik_ve_Ehl-i_Sunnetin_Cevabi.mp3' },
+					{ id: '07_Din_Adami_Bolucu_Olmaz_-_Onsoz', title: '07_Din_Adami_Bolucu_Olmaz_-_Onsoz', audio: 'Faideli_Bilgiler/07_Din_Adami_Bolucu_Olmaz_-_Onsoz.mp3' },
+					{ id: '08_Cok_Luzumlu_Bilgiler', title: '08_Cok_Luzumlu_Bilgiler', audio: 'Faideli_Bilgiler/08_Cok_Luzumlu_Bilgiler.mp3' },
+					{ id: '09_2.Cild_110.Mektub', title: '09_2.Cild_110.Mektub', audio: 'Faideli_Bilgiler/09_2.Cild_110.Mektub.mp3' },
+					{ id: '10_Din_Adami_Bolucu_Olmaz_-_Sonsoz', title: '10_Din_Adami_Bolucu_Olmaz_-_Sonsoz', audio: 'Faideli_Bilgiler/10_Din_Adami_Bolucu_Olmaz_-_Sonsoz.mp3' },
+					{ id: '11_Ehl-i_Sunnet_Kasidesi', title: '11_Ehl-i_Sunnet_Kasidesi', audio: 'Faideli_Bilgiler/11_Ehl-i_Sunnet_Kasidesi.mp3' },
+					{ id: '12_Dogru_Soze_Inan_Bolucuye_Aldanma_-_Onsoz', title: '12_Dogru_Soze_Inan_Bolucuye_Aldanma_-_Onsoz', audio: 'Faideli_Bilgiler/12_Dogru_Soze_Inan_Bolucuye_Aldanma_-_Onsoz.mp3' },
+					{ id: '13_Dogru_Soze_Inan_Bolucuye_Aldanma', title: '13_Dogru_Soze_Inan_Bolucuye_Aldanma', audio: 'Faideli_Bilgiler/13_Dogru_Soze_Inan_Bolucuye_Aldanma.mp3' },
+					{ id: '14_Cebriyye_ve_Ehl-i_Sunnetin_Itikadi', title: '14_Cebriyye_ve_Ehl-i_Sunnetin_Itikadi', audio: 'Faideli_Bilgiler/14_Cebriyye_ve_Ehl-i_Sunnetin_Itikadi.mp3' },
+					{ id: '15_Iman_Yalniz_Inanmak_midir', title: '15_Iman_Yalniz_Inanmak_midir', audio: 'Faideli_Bilgiler/15_Iman_Yalniz_Inanmak_midir.mp3' },
+					{ id: '16_Kuran-i_Kerim_Tefsiri_ve_Tercemeleri', title: '16_Kuran-i_Kerim_Tefsiri_ve_Tercemeleri', audio: 'Faideli_Bilgiler/16_Kuran-i_Kerim_Tefsiri_ve_Tercemeleri.mp3' },
+					{ id: '17_Allah_Korkusu_ve_Allah_Sevgisi', title: '17_Allah_Korkusu_ve_Allah_Sevgisi', audio: 'Faideli_Bilgiler/17_Allah_Korkusu_ve_Allah_Sevgisi.mp3' },
+					{ id: '18_Ictihad_Nedir', title: '18_Ictihad_Nedir', audio: 'Faideli_Bilgiler/18_Ictihad_Nedir.mp3' },
+					{ id: '19_Bidat_Ehline_Cevablar', title: '19_Bidat_Ehline_Cevablar', audio: 'Faideli_Bilgiler/19_Bidat_Ehline_Cevablar.mp3' },
+					{ id: '20_Ho-parlor_Internet', title: '20_Ho-parlor_Internet', audio: 'Faideli_Bilgiler/20_Ho-parlor_Internet.mp3' },
+					{ id: '21_3.Cild_23.Mektub', title: '21_3.Cild_23.Mektub', audio: 'Faideli_Bilgiler/21_3.Cild_23.Mektub.mp3' },
+					{ id: '22_1.Cild_213.Mektub', title: '22_1.Cild_213.Mektub', audio: 'Faideli_Bilgiler/22_1.Cild_213.Mektub.mp3' },
+					{ id: '23_96.Mektub', title: '23_96.Mektub', audio: 'Faideli_Bilgiler/23_96.Mektub.mp3' },
+					{ id: '24_Buyuk_Alimler', title: '24_Buyuk_Alimler', audio: 'Faideli_Bilgiler/24_Buyuk_Alimler.mp3' },
+					{ id: '25 Arka Kapak İçi 01-2', title: '25 Arka Kapak İçi 01-2', audio: 'Faideli_Bilgiler/25 Arka Kapak İçi 01-2.mp3' },
+					{ id: '25 Arka Kapak İçii', title: '25 Arka Kapak İçii', audio: 'Faideli_Bilgiler/25 Arka Kapak İçii.mp3' },
                 ]
             },
             {
@@ -374,7 +787,70 @@
                 title: 'Hak Sözün Vesikaları',
                 imageUrl: 'https://www.hakikatkitabevi.net/images/books/B009.png',
                 topics: [
-                    { id: 'hak-sozun-vesikalari-1', title: 'Konu 1', audio: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-7.mp3' }
+				  { id: '00 Ön Kapak İçi 2', title: '00 Ön Kapak İçi 2', audio: 'Hak_Sözün_Vesikaları/00 Ön Kapak İçi 2.mp3' },
+				  { id: '01 Giriş', title: '01 Giriş', audio: 'Hak_Sözün_Vesikaları/01 Giriş.mp3' },
+				  { id: '02_Tenbih', title: '02_Tenbih', audio: 'Hak_Sözün_Vesikaları/02_Tenbih.mp3' },
+				  { id: '03_Onsoz', title: '03_Onsoz', audio: 'Hak_Sözün_Vesikaları/03_Onsoz.mp3' },
+				  { id: '04_1.Risale_Hucec-i_Katiyye', title: '04_1.Risale_Hucec-i_Katiyye', audio: 'Hak_Sözün_Vesikaları/04_1.Risale_Hucec-i_Katiyye.mp3' },
+				  { id: '05_2.Risale_Redd-i_Revafid_Tercemesi', title: '05_2.Risale_Redd-i_Revafid_Tercemesi', audio: 'Hak_Sözün_Vesikaları/05_2.Risale_Redd-i_Revafid_Tercemesi.mp3' },
+				  { id: '06_3.Risale_Tezkiye-i_Ehl-i_Beyt_(1.Kisim)', title: '06_3.Risale_Tezkiye-i_Ehl-i_Beyt_(1.Kisim)', audio: 'Hak_Sözün_Vesikaları/06_3.Risale_Tezkiye-i_Ehl-i_Beyt_(1.Kisim).mp3' },
+				  { id: '07_4.Risale_Birleselim_ve_Seviselim', title: '07_4.Risale_Birleselim_ve_Seviselim', audio: 'Hak_Sözün_Vesikaları/07_4.Risale_Birleselim_ve_Seviselim.mp3' },
+				  { id: '08_5.Risale_Ehl-i_beytle__Eshabi_sevmelisin_-_Onsoz', title: '08_5.Risale_Ehl-i_beytle__Eshabi_sevmelisin_-_Onsoz', audio: 'Hak_Sözün_Vesikaları/08_5.Risale_Ehl-i_beytle__Eshabi_sevmelisin_-_Onsoz.mp3' },
+				  { id: '09_3.Cild_24.Mektub', title: '09_3.Cild_24.Mektub', audio: 'Hak_Sözün_Vesikaları/09_3.Cild_24.Mektub.mp3' },
+				  { id: '10_6.Risale_Peygamberlik_Nedir_-_Onsoz', title: '10_6.Risale_Peygamberlik_Nedir_-_Onsoz', audio: 'Hak_Sözün_Vesikaları/10_6.Risale_Peygamberlik_Nedir_-_Onsoz.mp3' },
+				  { id: '11_6.Risale_Peygamberlik_Ne_Demekdir', title: '11_6.Risale_Peygamberlik_Ne_Demekdir', audio: 'Hak_Sözün_Vesikaları/11_6.Risale_Peygamberlik_Ne_Demekdir.mp3' },
+				  { id: '12_6.Risale_2.Bahs_Mucize_Ne_Demekdir', title: '12_6.Risale_2.Bahs_Mucize_Ne_Demekdir', audio: 'Hak_Sözün_Vesikaları/12_6.Risale_2.Bahs_Mucize_Ne_Demekdir.mp3' },
+				  { id: '13_6.Risale_1.Makale', title: '13_6.Risale_1.Makale', audio: 'Hak_Sözün_Vesikaları/13_6.Risale_1.Makale.mp3' },
+				  { id: '14_6.Risale_2.Makale', title: '14_6.Risale_2.Makale', audio: 'Hak_Sözün_Vesikaları/14_6.Risale_2.Makale.mp3' },
+				  { id: '15_7.Risale_Imam-i_Ahmed_Rabbaninin_Hal_Tercemesi', title: '15_7.Risale_Imam-i_Ahmed_Rabbaninin_Hal_Tercemesi', audio: 'Hak_Sözün_Vesikaları/15_7.Risale_Imam-i_Ahmed_Rabbaninin_Hal_Tercemesi.mp3' },
+				  { id: '16_7.Risale_Imam-i_Rabbaninin_Yuksek_Ogullari', title: '16_7.Risale_Imam-i_Rabbaninin_Yuksek_Ogullari', audio: 'Hak_Sözün_Vesikaları/16_7.Risale_Imam-i_Rabbaninin_Yuksek_Ogullari.mp3' },
+				  { id: '17_213.Mektub', title: '17_213.Mektub', audio: 'Hak_Sözün_Vesikaları/17_213.Mektub.mp3' },
+				  { id: '18_226.Mektub', title: '18_226.Mektub', audio: 'Hak_Sözün_Vesikaları/18_226.Mektub.mp3' },
+				  { id: '19_1.Cild_21.Mektub', title: '19_1.Cild_21.Mektub', audio: 'Hak_Sözün_Vesikaları/19_1.Cild_21.Mektub.mp3' },
+				  { id: '20_1.Cild_22.Mektub', title: '20_1.Cild_22.Mektub', audio: 'Hak_Sözün_Vesikaları/20_1.Cild_22.Mektub.mp3' },
+				  { id: '21_1.Cild_23.Mektub', title: '21_1.Cild_23.Mektub', audio: 'Hak_Sözün_Vesikaları/21_1.Cild_23.Mektub.mp3' },
+				  { id: '22_1.Cild_49.Mektub', title: '22_1.Cild_49.Mektub', audio: 'Hak_Sözün_Vesikaları/22_1.Cild_49.Mektub.mp3' },
+				  { id: '23_1.Cild_50.Mektub', title: '23_1.Cild_50.Mektub', audio: 'Hak_Sözün_Vesikaları/23_1.Cild_50.Mektub.mp3' },
+				  { id: '24_1.Cild_78.Mektub', title: '24_1.Cild_78.Mektub', audio: 'Hak_Sözün_Vesikaları/24_1.Cild_78.Mektub.mp3' },
+				  { id: '25_1.Cild_80.Mektub', title: '25_1.Cild_80.Mektub', audio: 'Hak_Sözün_Vesikaları/25_1.Cild_80.Mektub.mp3' },
+				  { id: '26_1.Cild_128.Mektub', title: '26_1.Cild_128.Mektub', audio: 'Hak_Sözün_Vesikaları/26_1.Cild_128.Mektub.mp3' },
+				  { id: '27_1.Cild_130.Mektub', title: '27_1.Cild_130.Mektub', audio: 'Hak_Sözün_Vesikaları/27_1.Cild_130.Mektub.mp3' },
+				  { id: '28_1.Cild_195.Mektub', title: '28_1.Cild_195.Mektub', audio: 'Hak_Sözün_Vesikaları/28_1.Cild_195.Mektub.mp3' },
+				  { id: '29_1.Cild_202.Mektub', title: '29_1.Cild_202.Mektub', audio: 'Hak_Sözün_Vesikaları/29_1.Cild_202.Mektub.mp3' },
+				  { id: '30_2.Cild_36.Mektub', title: '30_2.Cild_36.Mektub', audio: 'Hak_Sözün_Vesikaları/30_2.Cild_36.Mektub.mp3' },
+				  { id: '31_2.Cild_37.Mektub', title: '31_2.Cild_37.Mektub', audio: 'Hak_Sözün_Vesikaları/31_2.Cild_37.Mektub.mp3' },
+				  { id: '32_2.Cild_38.Mektub', title: '32_2.Cild_38.Mektub', audio: 'Hak_Sözün_Vesikaları/32_2.Cild_38.Mektub.mp3' },
+				  { id: '33_2.Cild_39.Mektub', title: '33_2.Cild_39.Mektub', audio: 'Hak_Sözün_Vesikaları/33_2.Cild_39.Mektub.mp3' },
+				  { id: '34_2.Cild_42.Mektub', title: '34_2.Cild_42.Mektub', audio: 'Hak_Sözün_Vesikaları/34_2.Cild_42.Mektub.mp3' },
+				  { id: '35_2.Cild_45.Mektub', title: '35_2.Cild_45.Mektub', audio: 'Hak_Sözün_Vesikaları/35_2.Cild_45.Mektub.mp3' },
+				  { id: '36_2.Cild_59.Mektub', title: '36_2.Cild_59.Mektub', audio: 'Hak_Sözün_Vesikaları/36_2.Cild_59.Mektub.mp3' },
+				  { id: '37_2.Cild_61.Mektub', title: '37_2.Cild_61.Mektub', audio: 'Hak_Sözün_Vesikaları/37_2.Cild_61.Mektub.mp3' },
+				  { id: '38_2.Cild_62.Mektub', title: '38_2.Cild_62.Mektub', audio: 'Hak_Sözün_Vesikaları/38_2.Cild_62.Mektub.mp3' },
+				  { id: '39_2.Cild_63.Mektub', title: '39_2.Cild_63.Mektub', audio: 'Hak_Sözün_Vesikaları/39_2.Cild_63.Mektub.mp3' },
+				  { id: '40_2.Cild_67.Mektub', title: '40_2.Cild_67.Mektub', audio: 'Hak_Sözün_Vesikaları/40_2.Cild_67.Mektub.mp3' },
+				  { id: '41_2.Cild_68.Mektub', title: '41_2.Cild_68.Mektub', audio: 'Hak_Sözün_Vesikaları/41_2.Cild_68.Mektub.mp3' },
+				  { id: '42_2.Cild_80.Mektub', title: '42_2.Cild_80.Mektub', audio: 'Hak_Sözün_Vesikaları/42_2.Cild_80.Mektub.mp3' },
+				  { id: '43_2.Cild_83.Mektub', title: '43_2.Cild_83.Mektub', audio: 'Hak_Sözün_Vesikaları/43_2.Cild_83.Mektub.mp3' },
+				  { id: '44_3.Cild_6.Mektub', title: '44_3.Cild_6.Mektub', audio: 'Hak_Sözün_Vesikaları/44_3.Cild_6.Mektub.mp3' },
+				  { id: '45_3.Cild_34.Mektub', title: '45_3.Cild_34.Mektub', audio: 'Hak_Sözün_Vesikaları/45_3.Cild_34.Mektub.mp3' },
+				  { id: '46_3.Cild_55.Mektub', title: '46_3.Cild_55.Mektub', audio: 'Hak_Sözün_Vesikaları/46_3.Cild_55.Mektub.mp3' },
+				  { id: '47_3.Cild_153.Mektub', title: '47_3.Cild_153.Mektub', audio: 'Hak_Sözün_Vesikaları/47_3.Cild_153.Mektub.mp3' },
+				  { id: '48_3.Cild_154.Mektub', title: '48_3.Cild_154.Mektub', audio: 'Hak_Sözün_Vesikaları/48_3.Cild_154.Mektub.mp3' },
+				  { id: '49_3.Cild_156.Mektub', title: '49_3.Cild_156.Mektub', audio: 'Hak_Sözün_Vesikaları/49_3.Cild_156.Mektub.mp3' },
+				  { id: '50_3.Cild_168.Mektub', title: '50_3.Cild_168.Mektub', audio: 'Hak_Sözün_Vesikaları/50_3.Cild_168.Mektub.mp3' },
+				  { id: '51_3.Cild_252.Mektub', title: '51_3.Cild_252.Mektub', audio: 'Hak_Sözün_Vesikaları/51_3.Cild_252.Mektub.mp3' },
+				  { id: '52_8.Risale_Eyyuhelveled_Kitabinin_Tercemesi', title: '52_8.Risale_Eyyuhelveled_Kitabinin_Tercemesi', audio: 'Hak_Sözün_Vesikaları/52_8.Risale_Eyyuhelveled_Kitabinin_Tercemesi.mp3' },
+				  { id: '53_8.Risale_Fasl', title: '53_8.Risale_Fasl', audio: 'Hak_Sözün_Vesikaları/53_8.Risale_Fasl.mp3' },
+				  { id: '54_9.Risale_Bir_Din_Cahiline_Cevab', title: '54_9.Risale_Bir_Din_Cahiline_Cevab', audio: 'Hak_Sözün_Vesikaları/54_9.Risale_Bir_Din_Cahiline_Cevab.mp3' },
+				  { id: '55_10.Risale_Komunistlik_ve_Komunistlerde_Din_Dusmanligi', title: '55_10.Risale_Komunistlik_ve_Komunistlerde_Din_Dusmanligi', audio: 'Hak_Sözün_Vesikaları/55_10.Risale_Komunistlik_ve_Komunistlerde_Din_Dusmanligi.mp3' },
+				  { id: '56_10.Risale_Yikilan_Ibadet_Yerleri', title: '56_10.Risale_Yikilan_Ibadet_Yerleri', audio: 'Hak_Sözün_Vesikaları/56_10.Risale_Yikilan_Ibadet_Yerleri.mp3' },
+				  { id: '57_10.Risale_Katl_Edilen_Din_Adamlari_', title: '57_10.Risale_Katl_Edilen_Din_Adamlari_', audio: 'Hak_Sözün_Vesikaları/57_10.Risale_Katl_Edilen_Din_Adamlari_.mp3' },
+				  { id: '58_10.Risale_Dini_Kitablar_Ve_Abidelerin_Imhasi', title: '58_10.Risale_Dini_Kitablar_Ve_Abidelerin_Imhasi', audio: 'Hak_Sözün_Vesikaları/58_10.Risale_Dini_Kitablar_Ve_Abidelerin_Imhasi.mp3' },
+				  { id: '59_10.Risale_Din_Aleyhinde_Yapilan_Baski_ve_Propagandalar', title: '59_10.Risale_Din_Aleyhinde_Yapilan_Baski_ve_Propagandalar', audio: 'Hak_Sözün_Vesikaları/59_10.Risale_Din_Aleyhinde_Yapilan_Baski_ve_Propagandalar.mp3' },
+				  { id: '60_10.Risale_Olulere_Saygisizlik', title: '60_10.Risale_Olulere_Saygisizlik', audio: 'Hak_Sözün_Vesikaları/60_10.Risale_Olulere_Saygisizlik.mp3' },
+				  { id: '61_Istigfar_Duasi', title: '61_Istigfar_Duasi', audio: 'Hak_Sözün_Vesikaları/61_Istigfar_Duasi.mp3' },
+				  { id: '62_Tevhid_Duasi', title: '62_Tevhid_Duasi', audio: 'Hak_Sözün_Vesikaları/62_Tevhid_Duasi.mp3' },
+				  { id: '63 Arka Kapak İçi', title: '63 Arka Kapak İçi', audio: 'Hak_Sözün_Vesikaları/63 Arka Kapak İçi.mp3' },
                 ]
             },
             {
@@ -390,16 +866,16 @@
                 title: 'İslam Ahlakı',
                 imageUrl: 'https://www.hakikatkitabevi.net/images/books/B003.png',
                 topics: [
-                        {id: '001_On_Kapak_Ici.mp3', title: '001 - Ön Kapak İçi', audio: '4-islam-ahlaki/001_On_Kapak_Ici.mp3'},
-                        {id: '002_Kelime-i_Tenzih.mp3', title: '002 - Kelime-i Tenzih', audio: '4-islam-ahlaki/002_Kelime-i_Tenzih.mp3'},
-                        {id: '003_Onsoz.mp3', title: '003 - Önsöz', audio: '4-islam-ahlaki/003_Onsoz.mp3'},
-                        {id: '004_1.Kisim.mp3', title: '004 - 1. Kısım', audio: '4-islam-ahlaki/004_1.Kisim.mp3'},
-                        {id: '005_Kotu_Ahlak_ve_Bunlardan_Kurtulma_Careleri.mp3', title: '005 - Kötü Ahlâk ve Bunlardan Kurtulma Çareleri', audio: '4-islam-ahlaki/005_Kotu_Ahlak_ve_Bunlardan_Kurtulma_Careleri.mp3'},
-                        {id: '006_Kotu_Ahlak_ve_Ilaclari.mp3', title: '006 - Kötü Ahlâk ve İlaclari', audio: '4-islam-ahlaki/006_Kotu_Ahlak_ve_Ilaclari.mp3'},
-                        {id: '007_Kufr.mp3', title: '007 - Küfr', audio: '4-islam-ahlaki/007_Kufr.mp3'},
-                        {id: '008_Cehalet.mp3', title: '008 - Cehalet', audio: '4-islam-ahlaki/008_Cehalet.mp3'},
-                        {id: '009_Mal_Mevki_Hirsi.mp3', title: '009 - Mal Mevki Hırsı', audio: '4-islam-ahlaki/009_Mal_Mevki_Hirsi.mp3'},
-                        {id: '010_Ayblanmak_Korkusu.mp3', title: '010- Ayblanmak Korkusu', audio: '4-islam-ahlaki/010_Ayblanmak_Korkusu.mp3'}
+                    {id: '001_On_Kapak_Ici.mp3', title: '001 - Ön Kapak İçi', audio: '4-islam-ahlaki/001_On_Kapak_Ici.mp3'},
+                    {id: '002_Kelime-i_Tenzih.mp3', title: '002 - Kelime-i Tenzih', audio: '4-islam-ahlaki/002_Kelime-i_Tenzih.mp3'},
+                    {id: '003_Onsoz.mp3', title: '003 - Önsöz', audio: '4-islam-ahlaki/003_Onsoz.mp3'},
+                    {id: '004_1.Kisim.mp3', title: '004 - 1. Kısım', audio: '4-islam-ahlaki/004_1.Kisim.mp3'},
+                    {id: '005_Kotu_Ahlak_ve_Bunlardan_Kurtulma_Careleri.mp3', title: '005 - Kötü Ahlâk ve Bunlardan Kurtulma Çareleri', audio: '4-islam-ahlaki/005_Kotu_Ahlak_ve_Bunlardan_Kurtulma_Careleri.mp3'},
+                    {id: '006_Kotu_Ahlak_ve_Ilaclari.mp3', title: '006 - Kötü Ahlâk ve İlaclari', audio: '4-islam-ahlaki/006_Kotu_Ahlak_ve_Ilaclari.mp3'},
+                    {id: '007_Kufr.mp3', title: '007 - Küfr', audio: '4-islam-ahlaki/007_Kufr.mp3'},
+                    {id: '008_Cehalet.mp3', title: '008 - Cehalet', audio: '4-islam-ahlaki/008_Cehalet.mp3'},
+                    {id: '009_Mal_Mevki_Hirsi.mp3', title: '009 - Mal Mevki Hırsı', audio: '4-islam-ahlaki/009_Mal_Mevki_Hirsi.mp3'},
+                    {id: '010_Ayblanmak_Korkusu.mp3', title: '010- Ayblanmak Korkusu', audio: '4-islam-ahlaki/010_Ayblanmak_Korkusu.mp3'}
                 ]
             },
             {
@@ -472,9 +948,6 @@
         const bookImagesContainer = document.getElementById('book-images-container');
         const topicSelect = document.getElementById('topic-select');
         const currentTopicTitle = document.getElementById('current-topic-title');
-        const visualProgressBar = document.getElementById('visual-progress-bar');
-        const bookCompletionPercentage = document.getElementById('book-completion-percentage');
-        const bookListenCount = document.getElementById('book-listen-count');
         const audioPlayer = document.getElementById('audio-player');
         const progressBar = document.getElementById('progress-bar');
         const currentTimeSpan = document.getElementById('current-time');
@@ -486,11 +959,14 @@
         const speedValueSpan = document.getElementById('speed-value');
         const currentBookDisplayImage = document.getElementById('current-book-display-image');
         const currentBookImageLink = document.getElementById('current-book-image-link');
-        const searchInput = document.getElementById('search-input'); // Yeni arama inputu
-        const resetProgressBtn = document.getElementById('reset-progress-btn'); // İlerleme Sıfırla düğmesi
-        // Yeni eklenen: ilerleme çubuğu kapsayıcısı
-        const progressBarContainer = document.getElementById('progress-bar-container');
-
+        const searchInput = document.getElementById('search-input');
+        
+        // YENİ/GÜNCELLENMİŞ ELEMENTLER
+        const copyPositionBtn = document.getElementById('copy-position-btn');
+        const copyFeedbackModal = document.getElementById('copy-feedback-modal');
+        const copyDataDisplay = document.getElementById('copy-data-display');
+        const pasteCodeInput = document.getElementById('paste-code-input');
+        const loadPositionBtn = document.getElementById('load-position-btn');
 
         // Tema elementleri
         const themeToggleBtn = document.getElementById('theme-toggle');
@@ -504,12 +980,10 @@
         let isPlaying = false;
         let playbackSpeed = parseFloat(playbackSpeedInput.value);
 
-        // Kullanıcıya özel ilerleme verileri için global değişken
-        let bookProgressData = {}; 
+        // --- YARDIMCI FONKSİYONLAR ---
 
-        // Yardımcı fonksiyon: Zamanı HH:MM:SS formatına dönüştürür
         function formatTime(seconds) {
-            if (isNaN(seconds)) return '00:00';
+            if (isNaN(seconds) || seconds < 0) return '00:00';
             const h = Math.floor(seconds / 3600);
             const m = Math.floor((seconds % 3600) / 60);
             const s = Math.floor(seconds % 60);
@@ -518,56 +992,213 @@
             const formattedS = String(s).padStart(2, '0');
             return `${formattedH}${formattedM}:${formattedS}`;
         }
+        
+        /**
+         * Yeni, kısa ve anlaşılır formatta konum bilgisini kodlar.
+         * Format: <bookId>_<topicIndex>_<toplamSaniye>
+         * Örn: tam-ilmhai_25_1234
+         */
+        function encodePosition() {
+            if (!selectedBook || !currentTopic || !currentTopic.audio) return null;
 
-        // İlerleme verilerini localStorage'dan yükler veya başlatır
-        function initializeProgressData() {
-            const storedProgress = localStorage.getItem('bookProgress');
-            if (storedProgress) {
-                // Depolanan veriyi ayrıştır ve completedTopics dizilerini Set'lere dönüştür
-                const parsedProgress = JSON.parse(storedProgress);
-                for (const bookId in parsedProgress) {
-                    if (parsedProgress.hasOwnProperty(bookId)) {
-                        parsedProgress[bookId].completedTopics = new Set(parsedProgress[bookId].completedTopics);
-                    }
-                }
-                bookProgressData = parsedProgress;
+            // 1. Kitap ID'sini al
+            const bookId = selectedBook.id;
+
+            // 2. Konu Index'ini bul
+            const topicIndex = selectedBook.topics.findIndex(t => t.id === currentTopic.id);
+            if (topicIndex === -1) return null;
+
+            // 3. Toplam saniyeyi al ve saniyeye çevir
+            const totalSeconds = Math.floor(audioPlayer.currentTime);
+            
+            // 4. Kısa Kodu oluştur
+            // Konu indeksini ve saniyeyi 4 basamaklı string olarak formatlayarak daha düzenli bir kod sağlarız.
+            const topicIndexStr = String(topicIndex).padStart(4, '0');
+            const secondsStr = String(totalSeconds).padStart(4, '0');
+
+            return `${bookId}_${topicIndexStr}_${secondsStr}`;
+        }
+
+
+        /**
+         * Yeni kısa formattaki kodu çözerek oynatıcı konumunu çıkarır.
+         * Örn: tam-ilmhai_0025_1234 -> { bookId: 'tam-ilmhai', topicIndex: 25, currentTime: 1234 }
+         */
+        function decodePosition(encodedString) {
+            const parts = encodedString.split('_');
+            
+            if (parts.length !== 3) {
+                console.error("Hata: Kod formatı geçersiz.");
+                return null;
+            }
+
+            const [bookId, topicIndexStr, secondsStr] = parts;
+
+            const topicIndex = parseInt(topicIndexStr, 10);
+            const currentTime = parseInt(secondsStr, 10);
+            
+            if (isNaN(topicIndex) || isNaN(currentTime)) {
+                console.error("Hata: Konum veya saniye değeri sayı değil.");
+                return null;
+            }
+            
+            return { 
+                bookId, 
+                topicIndex, 
+                currentTime 
+            };
+        }
+
+
+        // Kopyalama geri bildirim modalını sadece HATA durumları için göster
+        function showCopyFeedback(displayMessage, type, rawData = "", isManualCopy = false) {
+            copyDataDisplay.innerHTML = `<strong>${displayMessage}</strong><br>${rawData}`;
+            copyFeedbackModal.classList.remove('hidden');
+            copyFeedbackModal.style.borderColor = type === 'red' ? '#ef4444' : (type === 'green' ? '#059669' : '#fbbf24'); 
+            
+            if (isManualCopy) {
+                // Manuel kopyalama durumunda (başarısızlık) animasyonu durdur ve seçimi etkinleştir.
+                copyFeedbackModal.style.animation = 'none'; 
+                copyFeedbackModal.style.opacity = '1';
+                copyFeedbackModal.style.pointerEvents = 'auto'; // Manuel seçime izin ver
             } else {
-                // Veri yoksa tüm kitaplar için başlat
-                books.forEach(book => {
-                    bookProgressData[book.id] = {
-                        completedTopics: new Set(),
-                        listenCount: 0
-                    };
-                });
-                saveProgressData(); // Başlangıç durumunu kaydet
+                // Başarılı veya yükleme durumunda animasyonu kullan ve tıklamayı engelle
+                copyFeedbackModal.style.animation = 'fadeInOut 5s forwards';
+                copyFeedbackModal.style.pointerEvents = 'none'; 
+                
+                // Animasyon bittiğinde gizle
+                setTimeout(() => {
+                    copyFeedbackModal.classList.add('hidden');
+                    copyFeedbackModal.style.animation = '';
+                }, 5000);
+            }
+        }
+        
+        // Kopyalama için en güvenilir yöntem
+        function performExecCommandCopy(text) {
+            const tempInput = document.createElement('textarea');
+            // Görüntülenmez yap
+            tempInput.style.position = 'absolute';
+            tempInput.style.left = '-9999px';
+            tempInput.value = text;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            
+            let successful = false;
+            try {
+                successful = document.execCommand('copy');
+            } catch (err) {
+                console.error("document.execCommand('copy') hatası:", err);
+            } finally {
+                document.body.removeChild(tempInput);
+            }
+            return successful;
+        }
+
+        // Kaldığın Yeri Kopyala işleminin ana mantığı
+        function copyCurrentPosition() {
+            if (!selectedBook || !currentTopic || !currentTopic.audio) {
+                showCopyFeedback("Hata: Oynatılabilir bir konum yok.", "red");
+                return;
+            }
+
+            // Yeni kısa formatta kodu üret
+            const encodedData = encodePosition();
+            if (!encodedData) {
+                showCopyFeedback("Hata: Konum kodu üretilemedi.", "red");
+                return;
+            }
+
+            const bookTitle = selectedBook.title;
+            const topicTitle = currentTopic.title;
+            const timeFormatted = formatTime(audioPlayer.currentTime);
+            
+            // UI'da gösterilecek metin (insan tarafından okunabilir)
+            const displayMessage = `**Konum:** ${bookTitle} / ${topicTitle} @ ${timeFormatted}`;
+            
+            // 1. Kopyalama işlemini dene
+            const copySuccess = performExecCommandCopy(encodedData);
+
+            // 2. Geri bildirim modalını göster (Kullanıcının isteği: Kopyalama başarısız olsa bile konumu göster)
+            if (copySuccess) {
+                // Başarılıysa, standart başarı mesajını göster
+                copyDataDisplay.innerHTML = `<strong>Kopyalandı!</strong> <br>${displayMessage}<br>Kodu Yapıştır:<br><span class="text-emerald-300 select-all font-mono">${encodedData}</span>`;
+                showCopyFeedback("Kopyalama Başarılı!", "green", encodedData, false);
+            } else {
+                // Başarısızsa, manuel kopyalama için bilgileri göster ve manuel kopyalamayı etkinleştir
+                copyDataDisplay.innerHTML = `<strong>Otomatik Kopyalama Başarısız!</strong> Lütfen aşağıdaki kısa kodu **manuel olarak seçip kopyalayın:** <br><span class="text-yellow-300 select-all font-mono">${encodedData}</span>`;
+                showCopyFeedback("Kopyalama Başarısız (Manuel Kopyalayın)", "yellow", encodedData, true);
             }
         }
 
-        // İlerleme verilerini localStorage'a kaydeder
-        function saveProgressData() {
-            // Set'leri JSON serileştirmesi için dizilere dönüştür
-            const dataToStore = {};
-            for (const bookId in bookProgressData) {
-                if (bookProgressData.hasOwnProperty(bookId)) {
-                    dataToStore[bookId] = {
-                        completedTopics: Array.from(bookProgressData[bookId].completedTopics),
-                        listenCount: bookProgressData[bookId].listenCount
-                    };
+        // Kopyalanan Konumu Yükle işleminin ana mantığı
+        function loadPositionFromCode(encodedCode) {
+            if (!encodedCode) {
+                showCopyFeedback("Hata: Lütfen geçerli bir kod yapıştırın.", "red");
+                return;
+            }
+
+            const decoded = decodePosition(encodedCode);
+
+            if (!decoded) {
+                showCopyFeedback("Hata: Geçersiz veya bozuk konum kodu. Format: <kitapID>_<index>_<saniye>", "red");
+                return;
+            }
+
+            const book = books.find(b => b.id === decoded.bookId);
+            if (!book) {
+                showCopyFeedback(`Hata: Kitap bulunamadı (ID: ${decoded.bookId})`, "red");
+                return;
+            }
+
+            const topic = book.topics[decoded.topicIndex];
+
+            if (!topic || topic.audio === '') {
+                showCopyFeedback(`Hata: Konu bulunamadı veya oynatılamaz (Index: ${decoded.topicIndex})`, "red");
+                return;
+            }
+
+            // 1. Kitabı Seç
+            selectBook(book.id);
+            
+            // 2. Konuyu seçiciden seç
+            topicSelect.value = topic.id;
+
+            // 3. Konuyu Yükle (Oynatma otomatik değil)
+            loadTopic(topic, false); 
+
+            // 4. Ses yüklendikten sonra zamanı ayarla
+            audioPlayer.addEventListener('loadeddata', function setTime() {
+                if (audioPlayer.duration >= decoded.currentTime) {
+                    audioPlayer.currentTime = decoded.currentTime;
+                    // Oynatıcıyı oynatmayı durdurup oynatılabilir durumda bırak
+                    audioPlayer.pause(); 
+                    isPlaying = false;
+                    updatePlayPauseButton();
+
+                    const timeFormatted = formatTime(decoded.currentTime);
+                    const successMessage = `Konum Yüklendi: ${book.title} / ${topic.title} @ ${timeFormatted}`;
+                    showCopyFeedback(successMessage, "green", encodedCode);
+
+                } else {
+                    // Eğer süre geçerli değilse veya dosya kısa ise en baştan başlat
+                    audioPlayer.currentTime = 0;
+                    showCopyFeedback("Uyarı: Kaydedilen süre dosya süresinden uzundu, baştan başlatıldı.", "red", encodedCode);
                 }
-            }
-            localStorage.setItem('bookProgress', JSON.stringify(dataToStore));
+                audioPlayer.removeEventListener('loadeddata', setTime); // Dinleyiciyi kaldır
+            });
         }
 
-        // Kitap resimlerini doldurma fonksiyonu (arama sorgusu eklenmiştir)
+        // --- CORE UI FONKSİYONLARI ---
+
+        // Kitap resimlerini doldurma fonksiyonu
         function populateBookImages(searchTerm = '') {
-            bookImagesContainer.innerHTML = ''; // Önceki resimleri temizle
+            bookImagesContainer.innerHTML = ''; 
             const lowerCaseSearchTerm = searchTerm.toLowerCase();
 
-            // Kitapları ve konularını arama terimine göre filtrele
             const filteredBooks = books.filter(book => {
                 const matchesBookTitle = book.title.toLowerCase().includes(lowerCaseSearchTerm);
                 const matchesTopic = book.topics.some(topic => 
-                    // topic ve topic.title'ın undefined/null olup olmadığını kontrol et
                     topic && topic.title && topic.title.toLowerCase().includes(lowerCaseSearchTerm)
                 );
                 return matchesBookTitle || matchesTopic;
@@ -575,23 +1206,19 @@
 
             filteredBooks.forEach(book => {
                 const bookItem = document.createElement('div');
-                bookItem.id = `book-item-${book.id}`; // Her kitaba özel ID
-                // Kitap öğelerinin genişliğini küçülttük ve lg:grid-cols-3 ile her satırda 3 kitap olmasını sağladık
+                bookItem.id = `book-item-${book.id}`;
                 bookItem.classList.add('book-item', 'flex-shrink-0', 'w-28', 'h-auto', 'rounded-lg', 'overflow-hidden', 'shadow-md', 'flex', 'flex-col', 'items-center', 'justify-center', 'p-2', 'bg-gray-50', 'text-center', 'transform', 'hover:scale-105', 'active:scale-95', 'duration-200', 'ease-in-out');
-                bookItem.classList.add('lg:w-40', 'lg:h-auto', 'lg:p-3'); // Masaüstü için daha uygun boyutlandırma
-
+                bookItem.classList.add('lg:w-40', 'lg:h-auto', 'lg:p-3');
 
                 const img = document.createElement('img');
                 img.src = book.imageUrl;
                 img.alt = book.title;
-                img.classList.add('w-20', 'h-20', 'object-contain', 'rounded-md', 'mb-2'); // Küçük resim boyutu
-                img.classList.add('lg:w-32', 'lg:h-32'); // Masaüstü için daha büyük resim
+                img.classList.add('w-20', 'h-20', 'object-contain', 'rounded-md', 'mb-2');
+                img.classList.add('lg:w-32', 'lg:h-32');
 
                 const title = document.createElement('p');
                 title.textContent = book.title;
-                // `truncate` kaldırıldı, böylece metin taşarsa alt satıra geçebilir
-                title.classList.remove('truncate');
-                title.classList.add('text-sm', 'font-semibold', 'text-gray-800', 'w-full'); // Başlık metni
+                title.classList.add('text-sm', 'font-semibold', 'text-gray-800', 'w-full');
                 title.classList.add('lg:text-base');
 
                 bookItem.appendChild(img);
@@ -603,7 +1230,6 @@
 
                 bookImagesContainer.appendChild(bookItem);
             });
-            // Tema geçişinde `book-item`'ların doğru arka plan rengini almasını sağla
             applyTheme(localStorage.getItem('theme') || 'dark');
         }
 
@@ -611,31 +1237,29 @@
         function selectBook(bookId) {
             const previouslySelected = document.querySelector('.book-item.selected');
             if (previouslySelected) {
-                previouslySelected.classList.remove('selected');
-                // Önceki seçili öğenin kenarlığını şeffaf yap
-                previouslySelected.classList.remove('border-emerald-600');
+                previouslySelected.classList.remove('selected', 'border-emerald-600');
                 previouslySelected.classList.add('border-transparent');
             }
 
             const newSelectedBookElement = document.getElementById(`book-item-${bookId}`);
             if (newSelectedBookElement) {
-                newSelectedBookElement.classList.add('selected');
-                // Yeni seçili öğeye kenarlık ekle
+                newSelectedBookElement.classList.add('selected', 'border-emerald-600');
                 newSelectedBookElement.classList.remove('border-transparent');
-                newSelectedBookElement.classList.add('border-emerald-600');
             }
             
             selectedBook = books.find(b => b.id === bookId);
             if (selectedBook) {
-                // Konu seçme menüsünü doldur
                 populateTopics(selectedBook.id);
-                // Kitap görselini ve linkini güncelle
                 currentBookDisplayImage.src = selectedBook.imageUrl;
                 currentBookDisplayImage.alt = selectedBook.title;
-                currentBookImageLink.href = selectedBook.imageUrl; // Kitap resmine tıklayınca resmin linkine gitsin
+                currentBookImageLink.href = selectedBook.imageUrl; 
 
-                loadTopic(selectedBook.topics[0], false); // Yeni kitabı ve ilk konusunu yükle, otomatik oynatma yapma
-                updateDisplay(); // Yeni kitap seçildiğinde ilerlemeyi güncelle
+                // İlk oynatılabilir konuyu yükle
+                const defaultTopic = selectedBook.topics.find(t => t.audio !== '') || selectedBook.topics[0];
+                if (defaultTopic) {
+                    loadTopic(defaultTopic, false); 
+                }
+                updateDisplay();
             }
         }
 
@@ -644,77 +1268,75 @@
             const book = books.find(b => b.id === bookId);
             if (!book) return;
 
-            topicSelect.innerHTML = ''; // Önceki seçenekleri temizle
+            topicSelect.innerHTML = ''; 
             book.topics.forEach(topic => {
                 const option = document.createElement('option');
                 option.value = topic.id;
                 option.textContent = topic.title;
-                topicSelect.appendChild(option);
-            });
-            // Varsayılan olarak seçili kitabın ilk konusunu seç
-            currentTopic = book.topics[0];
-            topicSelect.value = currentTopic.id;
-            // updateDisplay zaten selectBook içinde çağrılıyor
-        }
-
-        // Oynatma ekranını güncelle
-        function updateDisplay() {
-            if (currentTopic && selectedBook) {
-                currentTopicTitle.textContent = currentTopic.title;
                 
-                const bookProgress = bookProgressData[selectedBook.id];
-                const totalTopics = selectedBook.topics.length;
-                const completedTopicsCount = bookProgress ? bookProgress.completedTopics.size : 0;
-                let completionPercentage = 0;
-
-                if (totalTopics > 0) {
-                    completionPercentage = (completedTopicsCount / totalTopics) * 100;
+                if (topic.audio === '') {
+                    option.disabled = true;
+                    option.style.fontStyle = 'italic';
+                    option.style.fontWeight = 'bold';
                 }
 
-                const listenCount = bookProgress ? bookProgress.listenCount : 0;
+                topicSelect.appendChild(option);
+            });
+            
+            // Varsayılan olarak ilk oynatılabilir konuyu seç
+            currentTopic = book.topics.find(t => t.audio !== '') || book.topics[0];
+            if (currentTopic) {
+                topicSelect.value = currentTopic.id;
+            }
+        }
 
-                // İlerleme çubuğunu ve yüzdesini güncelle
-                visualProgressBar.style.width = `${completionPercentage.toFixed(0)}%`;
-                bookCompletionPercentage.textContent = `${completionPercentage.toFixed(0)}%`;
-                
-                // Dinleme sayacını güncelle
-                bookListenCount.textContent = `Kitap Dinleme Sayısı: ${listenCount}`;
-
+        // Oynatma ekranını güncelle (Basitleştirilmiş)
+        function updateDisplay() {
+            if (currentTopic && selectedBook) {
+                currentTopicTitle.textContent = selectedBook.title + ' - ' + currentTopic.title;
             } else {
                 currentTopicTitle.textContent = 'Konu Seçilmedi';
-                visualProgressBar.style.width = '0%';
-                bookCompletionPercentage.textContent = '0%';
-                bookListenCount.textContent = 'Kitap Dinleme Sayısı: 0';
             }
         }
 
         // Sesi yükleme ve oynatma
         function loadTopic(topic, autoPlayAfterLoad = false) {
-            if (audioPlayer.src !== topic.audio) { // Sadece farklı bir ses ise yeniden yükle
-                audioPlayer.src = topic.audio;
-                audioPlayer.load(); // Ses dosyasını yükle
-                isPlaying = false; // Yükleme sırasında oynatmıyor olarak ayarla
+            if (topic.audio === '') {
+                currentTopicTitle.textContent = `${topic.title} (Bölüm Başlığı)`;
+                audioPlayer.src = '';
+                isPlaying = false;
                 updatePlayPauseButton();
-                progressBar.value = 0;
-                currentTimeSpan.textContent = '00:00';
                 durationSpan.textContent = '00:00';
-                // İlerleme çubuğunun dolgusunu sıfırla
-                progressBar.style.setProperty('--progress', '0%');
+                return;
             }
+
+            if (audioPlayer.src.endsWith(topic.audio) && currentTopic && currentTopic.id === topic.id) {
+                // Aynı konu zaten yüklüyse bir şey yapma
+                return;
+            }
+
+            audioPlayer.src = topic.audio;
+            audioPlayer.load();
+            isPlaying = false;
+            updatePlayPauseButton();
+            progressBar.value = 0;
+            currentTimeSpan.textContent = '00:00';
+            durationSpan.textContent = '00:00';
+            progressBar.style.setProperty('--progress', '0%');
 
             currentTopic = topic;
             updateDisplay();
-            audioPlayer.playbackRate = playbackSpeed; // Hızı uygula
+            audioPlayer.playbackRate = playbackSpeed;
 
-            // Eğer otomatik oynatma isteniyorsa, kullanıcı etkileşimi sonrası başlat
             if (autoPlayAfterLoad) {
-                audioPlayer.play().catch(e => {
+                audioPlayer.play().then(() => {
+                    isPlaying = true;
+                    updatePlayPauseButton();
+                }).catch(e => {
                     console.error("Oynatma hatası (otomatik geçiş):", e);
                     isPlaying = false;
                     updatePlayPauseButton();
                 });
-                isPlaying = true; // Hata vermese bile oynuyor olarak işaretle
-                updatePlayPauseButton();
             }
         }
 
@@ -735,89 +1357,53 @@
         function applyTheme(theme) {
             const body = document.body;
             
-            // Mevcut arka plan sınıflarını temizle
+            // Temizleme
             body.classList.remove('bg-gradient-to-br', 'from-gray-800', 'via-stone-900', 'to-black', 'from-blue-100', 'via-white', 'to-gray-200');
-            // playerCard'ın önceki tema sınıflarını temizle
             playerCard.classList.remove('bg-white', 'bg-opacity-90', 'backdrop-blur-lg', 'bg-gray-100', 'bg-opacity-95', 'border-gray-700', 'border-gray-200', 'bg-gray-800');
 
-            // Metin renklerini ve diğer tema özelliklerini güncelle
-            const textElements = document.querySelectorAll('label, h1, h2, p, span, .book-item p'); // book-item içindeki p etiketleri de dahil edildi
+            const textElements = document.querySelectorAll('label, h1, h2, p, span, .book-item p');
             textElements.forEach(el => {
-                // Eski metin rengi sınıflarını temizle
                 el.classList.remove('text-gray-800', 'text-gray-700', 'text-gray-600', 'text-white', 'text-gray-200');
                 if (theme === 'dark') {
-                    el.classList.add('text-gray-200'); // Koyu temada açık metin
+                    el.classList.add('text-gray-200');
                 } else {
-                    el.classList.add('text-gray-800'); // Açık temada koyu metin
+                    el.classList.add('text-gray-800');
                 }
             });
 
-            // Kitap tamamlama yüzdesi metin rengini temaya göre ayarla
-            const bookCompletionPercentageWrapper = document.getElementById('book-completion-percentage-wrapper');
-            if (bookCompletionPercentageWrapper) {
-                bookCompletionPercentageWrapper.classList.remove('text-gray-800', 'text-gray-200'); // Mevcut renkleri temizle
-                if (theme === 'dark') {
-                    bookCompletionPercentageWrapper.classList.add('text-gray-200'); // Koyu temada açık metin (koyu çubuk üzerinde okunabilir)
-                } else {
-                    bookCompletionPercentageWrapper.classList.add('text-gray-800'); // Açık temada koyu metin (açık çubuk üzerinde okunabilir)
-                }
-            }
-            
-            // Kitap ilerlemesi çubuğunun arka planını temaya göre ayarla (progressBarContainer üzerinden)
-            if (progressBarContainer) { // progressBarContainer'ın varlığını kontrol et
-                progressBarContainer.classList.remove('bg-gray-200', 'bg-gray-700'); // Mevcut renkleri temizle
-                if (theme === 'dark') {
-                    progressBarContainer.classList.add('bg-gray-700'); // Koyu temada koyu arka plan
-                } else {
-                    progressBarContainer.classList.add('bg-gray-200'); // Açık temada açık arka plan
-                }
-            }
-
-
-            // İlerleme sıfırlama düğmesi rengini temaya göre ayarla
-            if (resetProgressBtn) {
-                resetProgressBtn.classList.remove('bg-red-600', 'hover:bg-red-700', 'bg-red-700', 'hover:bg-red-800');
-                if (theme === 'dark') {
-                    resetProgressBtn.classList.add('bg-red-700', 'hover:bg-red-800');
-                } else {
-                    resetProgressBtn.classList.add('bg-red-600', 'hover:bg-red-700');
-                }
-            }
-
-
-            // Input, select ve arama inputu elementlerinin arka plan ve metin renklerini güncelle
             const inputSelectElements = document.querySelectorAll('select, input[type="range"], input[type="text"]');
             inputSelectElements.forEach(el => {
-                // Eski arka plan ve metin rengi sınıflarını temizle
                 el.classList.remove('bg-gray-100', 'text-gray-800', 'bg-gray-700', 'text-gray-100', 'border-gray-300', 'border-gray-600', 'bg-white');
                 if (theme === 'dark') {
-                    el.classList.add('bg-gray-700', 'text-gray-100', 'border-gray-600'); // Koyu temada koyu input/select, açık metin ve koyu kenarlık
+                    el.classList.add('bg-gray-700', 'text-gray-100', 'border-gray-600');
                 } else {
-                    el.classList.add('bg-white', 'text-gray-800', 'border-gray-300'); // Açık temada beyaz input/select, koyu metin ve açık kenarlık
+                    el.classList.add('bg-white', 'text-gray-800', 'border-gray-300');
                 }
             });
-            // Arama çubuğunun kenarlık rengini de güncelle
             const searchInput = document.getElementById('search-input');
+            const pasteCodeInput = document.getElementById('paste-code-input');
             if (searchInput) {
                 searchInput.classList.remove('border-gray-300', 'border-gray-600');
                 if (theme === 'dark') {
                     searchInput.classList.add('border-gray-600');
+                    pasteCodeInput.classList.add('border-gray-600');
                 } else {
                     searchInput.classList.add('border-gray-300');
+                    pasteCodeInput.classList.add('border-gray-300');
                 }
             }
 
 
             if (theme === 'dark') {
                 body.classList.add('bg-gradient-to-br', 'from-gray-800', 'via-stone-900', 'to-black');
-                playerCard.classList.add('bg-gray-800', 'bg-opacity-90', 'backdrop-blur-lg', 'border-gray-700'); // Koyu tema için card arka planı ve kenarlık
+                playerCard.classList.add('bg-gray-800', 'bg-opacity-90', 'backdrop-blur-lg', 'border-gray-700');
                 themeToggleBtn.classList.remove('bg-gray-200', 'hover:bg-gray-300', 'text-gray-800');
                 themeToggleBtn.classList.add('bg-gray-700', 'hover:bg-gray-600', 'text-white');
                 sunIcon.classList.remove('hidden');
                 moonIcon.classList.add('hidden');
             } else { // light theme
                 body.classList.add('bg-gradient-to-br', 'from-blue-100', 'via-white', 'to-gray-200');
-                playerCard.classList.add('bg-white', 'bg-opacity-95', 'backdrop-blur-lg', 'border-gray-200'); // Açık tema için card arka planı ve kenarlık
+                playerCard.classList.add('bg-white', 'bg-opacity-95', 'backdrop-blur-lg', 'border-gray-200');
                 themeToggleBtn.classList.remove('bg-gray-700', 'hover:bg-gray-600', 'text-white');
                 themeToggleBtn.classList.add('bg-gray-200', 'hover:bg-gray-300', 'text-gray-800');
                 sunIcon.classList.add('hidden');
@@ -825,15 +1411,13 @@
             }
             localStorage.setItem('theme', theme);
 
-            // book-item elemanlarının arka planını ve kenarlıklarını güncelle
             document.querySelectorAll('.book-item').forEach(item => {
                 item.classList.remove('bg-gray-50', 'bg-gray-700', 'border-transparent', 'border-emerald-600', 'bg-white');
                 if (theme === 'dark') {
-                    item.classList.add('bg-gray-700'); // Koyu tema kitap öğesi arka planı
+                    item.classList.add('bg-gray-700');
                 } else {
-                    item.classList.add('bg-white'); // Açık tema kitap öğesi arka planı (Tamamen beyaz)
+                    item.classList.add('bg-white');
                 }
-                // Seçili kitap öğesinin kenarlık rengini koru
                 if (item.classList.contains('selected')) {
                     item.classList.add('border-emerald-600');
                 } else {
@@ -842,16 +1426,14 @@
             });
         }
 
-        // Olay Dinleyicileri
+        // --- OLAY DİNLEYİCİLERİ ---
 
-        // Sayfa yüklendiğinde
         window.onload = () => {
-            // Kaydedilmiş temayı yükle veya varsayılan olarak koyu temayı kullan
             let currentTheme = localStorage.getItem('theme') || 'dark';
             applyTheme(currentTheme);
             
-            initializeProgressData(); // İlerleme verilerini başlat
-            populateBookImages(); // Kitap seçim elemanlarını doldur
+            // İlk kitabı yükle
+            populateBookImages();
             if (books.length > 0) {
                 selectBook(books[0].id);
             }
@@ -862,7 +1444,7 @@
             const topicId = event.target.value;
             const topic = selectedBook.topics.find(t => t.id === topicId);
             if (topic) {
-                loadTopic(topic, false); // Seçilen konuyu yükle, otomatik oynatma yapma
+                loadTopic(topic, false); 
             }
         });
 
@@ -874,6 +1456,12 @@
 
         // Oynat/Duraklat düğmesi tıklaması
         playPauseBtn.addEventListener('click', () => {
+            if (!currentTopic || currentTopic.audio === '') {
+                // Eğer currentTopic null ise veya audio yoksa oynatmayı engelle
+                showCopyFeedback("Oynatılabilir bir bölüm seçin.", "red");
+                return;
+            }
+
             if (audioPlayer.paused) {
                 audioPlayer.play().then(() => {
                     isPlaying = true;
@@ -890,28 +1478,42 @@
 
         // İlerleme çubuğu değiştiğinde
         progressBar.addEventListener('input', () => {
+            // progress bar hareket ettirilirken oynatmayı durdur
+            if (!audioPlayer.paused) audioPlayer.pause();
+        });
+
+        progressBar.addEventListener('change', () => {
             const seekTime = (audioPlayer.duration / 100) * progressBar.value;
             audioPlayer.currentTime = seekTime;
+            // Seek bittikten sonra oynatmaya devam et
+            if (!isPlaying) {
+                audioPlayer.play().then(() => {
+                    isPlaying = true;
+                    updatePlayPauseButton();
+                }).catch(e => {
+                    console.error("Oynatma hatası (seek sonrası):", e);
+                });
+            }
         });
+
 
         // Oynatma hızı değiştiğinde
         playbackSpeedInput.addEventListener('input', (event) => {
             playbackSpeed = parseFloat(event.target.value);
-            speedValueSpan.textContent = playbackSpeed.toFixed(1); // Hızı güncel olarak göster
+            speedValueSpan.textContent = playbackSpeed.toFixed(1);
             audioPlayer.playbackRate = playbackSpeed;
         });
 
         // Audio olayları
         audioPlayer.addEventListener('loadedmetadata', () => {
             durationSpan.textContent = formatTime(audioPlayer.duration);
-            audioPlayer.playbackRate = playbackSpeed; // Yükleme sonrası hızı ayarla
+            audioPlayer.playbackRate = playbackSpeed;
         });
 
         audioPlayer.addEventListener('timeupdate', () => {
             const progress = (audioPlayer.currentTime / audioPlayer.duration) * 100;
             progressBar.value = progress || 0;
             currentTimeSpan.textContent = formatTime(audioPlayer.currentTime);
-            // İlerleme çubuğunun dolgu rengini güncelle
             progressBar.style.setProperty('--progress', progress + '%');
         });
 
@@ -922,56 +1524,49 @@
             currentTimeSpan.textContent = '00:00';
             progressBar.style.setProperty('--progress', '0%');
 
-            // Mevcut konuyu tamamlanmış olarak işaretle
-            if (selectedBook && currentTopic) {
-                const bookId = selectedBook.id;
-                const topicId = currentTopic.id;
-
-                if (!bookProgressData[bookId]) {
-                    bookProgressData[bookId] = { completedTopics: new Set(), listenCount: 0 };
-                }
-                bookProgressData[bookId].completedTopics.add(topicId);
-
-                // Tüm konular tamamlandıysa, dinleme sayısını artır ve ilerlemeyi sıfırla
-                if (bookProgressData[bookId].completedTopics.size === selectedBook.topics.length) {
-                    bookProgressData[bookId].listenCount++;
-                    bookProgressData[bookId].completedTopics.clear(); // Sonraki tamamlanma için sıfırla
-                }
-                saveProgressData(); // Verileri kaydet
-            }
-
+            // Sonraki konuya otomatik geçiş
             const currentTopicIndex = selectedBook.topics.findIndex(
                 topic => topic.id === currentTopic.id
             );
-            const nextTopicIndex = currentTopicIndex + 1;
+            
+            let nextTopicIndex = currentTopicIndex + 1;
+            let nextTopic = null;
 
-            if (nextTopicIndex < selectedBook.topics.length) {
+            // Ses dosyası olan bir sonraki konuyu bul
+            while (nextTopicIndex < selectedBook.topics.length) {
+                const potentialNextTopic = selectedBook.topics[nextTopicIndex];
+                if (potentialNextTopic.audio !== '') {
+                    nextTopic = potentialNextTopic;
+                    break;
+                }
+                nextTopicIndex++;
+            }
+            
+            if (nextTopic) {
                 // Sonraki konuyu yükle ve otomatik oynat
-                loadTopic(selectedBook.topics[nextTopicIndex], true);
+                loadTopic(nextTopic, true);
+                topicSelect.value = nextTopic.id; // Dropdown'u da güncelle
             } else {
                 console.log("Tüm konular bitti. Kitap tamamlandı.");
-                // İsteğe bağlı: Tüm kitapların bittiğine dair özel bir mesaj gösterebiliriz.
+                currentTopicTitle.textContent = `${selectedBook.title} - Tamamlandı!`;
             }
-            updateDisplay(); // Kitap ilerlemesini güncelle
+            updateDisplay();
         });
 
         // Tema değiştirme düğmesi tıklaması
         themeToggleBtn.addEventListener('click', () => {
-            let currentTheme = localStorage.getItem('theme') || 'dark'; // Mevcut temayı al
+            let currentTheme = localStorage.getItem('theme') || 'dark'; 
             const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
             applyTheme(newTheme);
         });
 
-        // İlerleme Sıfırla düğmesi tıklaması
-        resetProgressBtn.addEventListener('click', () => {
-            if (selectedBook && bookProgressData[selectedBook.id]) {
-                // Seçili kitabın ilerlemesini sıfırla
-                bookProgressData[selectedBook.id].completedTopics.clear();
-                bookProgressData[selectedBook.id].listenCount = 0;
-                saveProgressData(); // Güncellenmiş veriyi kaydet
-                updateDisplay(); // UI'ı güncelle
-                console.log(`${selectedBook.title} kitabının ilerlemesi sıfırlandı.`);
-            }
+        // YENİ: Kopyalama düğmesi tıklaması
+        copyPositionBtn.addEventListener('click', copyCurrentPosition);
+
+        // YENİ: Konum yükleme düğmesi tıklaması
+        loadPositionBtn.addEventListener('click', () => {
+            const encodedCode = pasteCodeInput.value.trim();
+            loadPositionFromCode(encodedCode);
         });
     </script>
 </body>
