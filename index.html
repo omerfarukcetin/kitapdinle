@@ -1291,13 +1291,28 @@
         }
 
         // Oynatma ekranını güncelle (Basitleştirilmiş)
-        function updateDisplay() {
-            if (currentTopic && selectedBook) {
-                currentTopicTitle.textContent = selectedBook.title + ' - ' + currentTopic.title;
-            } else {
-                currentTopicTitle.textContent = 'Konu Seçilmedi';
-            }
-        }
+			function updateDisplay() {
+						if (currentTopic && selectedBook) {
+							// Kitap adı ve konu başlığını birleştir
+							const fullTitle = `${selectedBook.title} - ${currentTopic.title}`;
+							
+							// UI'daki başlığı güncelle
+							currentTopicTitle.textContent = fullTitle;
+							
+							// YENİ EKLENEN KISIM: Tarayıcı başlığını (Title) güncelleme
+							document.title = fullTitle + " | Hakikat Kitabevi Sesli";
+							
+						} else if (selectedBook) {
+							// Sadece kitap seçiliyorsa
+							currentTopicTitle.textContent = selectedBook.title;
+							document.title = selectedBook.title + " | Hakikat Kitabevi";
+						} 
+						else {
+							// Hiçbir şey seçilmemişse varsayılan başlık
+							currentTopicTitle.textContent = 'Konu Seçilmedi';
+							document.title = 'Hakikat Kitabevi Sesli Yayınlar';
+						}
+					}
 
         // Sesi yükleme ve oynatma
         function loadTopic(topic, autoPlayAfterLoad = false) {
